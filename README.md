@@ -1,5 +1,11 @@
 # Web Tutorial
 
+## Ever wonder how the web works?
+![http request](./assets/http_communication.bmp)
+
+## What is a WebServer
+A web server has to store the website's files, namely all HTML documents and their related assets, including images, CSS stylesheets, JavaScript files, fonts, etc.
+
 ## Anatomy of an HTTP request
 ![http req anatomy](./assets/http_req_anatomy.bmp)
 ![http req anatomy 2](./assets/http_req_anatomy2.bmp)
@@ -26,6 +32,8 @@ Refresh lagi tentang html
 ```
 
 ## Flask pt.1
+[Flask](https://flask.palletsprojects.com/en/stable/) is a web framework written in Python. Jadi bukan hanya webserver, tapi sebuah tool untuk membuat web applications.
+
 1. import `flask`
 ```
 import flask
