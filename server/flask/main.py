@@ -4,24 +4,42 @@ import sys
 import json
 import asyncio
 
-from aioflask import Flask, Response, request, render_template, send_from_directory
+from aioflask import Flask, Response, request, redirect, url_for
 from flask_cors import CORS
 
 app = Flask(__name__)
+cors = CORS(app)
 
-@app.route('/<path:path>')
-async def index(path):
-    # await asyncio.sleep(1)
-    return  send_from_directory('templates', path) # must be in `./templates` folder
+@app.route('/')
+async def root():
+    return redirect(url_for('serve_index'))
 
-@app.route('/function_one', methods = ['GET'])
-async def function_one():
+@app.route('/index.html')
+async def serve_index():
+    f = open('index.html', 'r')
+    return f.read()
+
+@app.route('/terima_data', methods = ['GET'])
+async def terima_data():
+    headers = dict(request.headers)
+    print(f'headers: {headers}')
+
+    params = dict(request.args)
+    print(f'params: {params}')
+
+    body = request.data
+    print(f'data: {body}')
+
     response = {
         "status": 200,
-        "status_message": "function_one OK"
+        "status_message": "terima_data OK",
+        "headers": headers,
+        "params": params,
+        "body": body
     }
     print(response)
     return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
+
   
 if __name__ == '__main__':
     print("Starting server...")
