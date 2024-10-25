@@ -19,6 +19,10 @@ async def serve_index():
     f = open('index.html', 'r')
     return f.read()
 
+@app.route('/text')
+async def text():
+    return "sebuah plaintext juga bisa dikembalikan"
+
 @app.route('/terima_data', methods = ['GET'])
 async def terima_data():
     headers = dict(request.headers)
@@ -39,7 +43,6 @@ async def terima_data():
     }
     print(response)
     return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
-
   
 if __name__ == '__main__':
     print("Starting server...")
