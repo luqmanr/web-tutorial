@@ -35,26 +35,41 @@ Refresh lagi tentang html
 [Flask](https://flask.palletsprojects.com/en/stable/) is a web framework written in Python. Jadi bukan hanya webserver, tapi sebuah tool untuk membuat web applications.
 
 1. import `flask`
-```
+```python
 import flask
 ```
 
 2. inisialisasi object `Flask`
-```
+```python
 app = Flask(__name__)
 ```
 
 3. definisikan sebuah `route` atau `path` dengan `function` atau `endpoint` yang akan kita jalankan
-```
+```python
 @app.route('/')
 def text():
     return "kembalikan sebuah text"
 ```
 
 4. jalankan aplikasi
-```
+```python
 app.run()
 ```
 
 ## Flask pt.2
 Selain text, kita juga bisa return sebuah `html`
+
+1. return sebuah `index.html`
+```python
+@app.route('/index.html')
+def serve_index():
+    f = open('index.html', 'rb')
+    return f.read()
+```
+
+2. Quiz, coba kembalikan sebuah gambar kucing
+
+3. Quiz, coba kembalikan sebuah dokumen singkat, berisikan:
+    - Gambar personil band favorit anda
+    - Judul lagu favorit dari mereka
+    - Cuplikan lirik favorit
