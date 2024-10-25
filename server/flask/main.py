@@ -4,15 +4,11 @@ import sys
 import json
 import asyncio
 
-from aioflask import Flask, Response, request, redirect, url_for
+from aioflask import Flask, Response, request, redirect, url_for, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
 cors = CORS(app)
-
-@app.route('/')
-async def root():
-    return redirect(url_for('serve_index'))
 
 @app.route('/index.html')
 async def serve_index():
@@ -34,15 +30,9 @@ async def terima_data():
     body = request.data
     print(f'data: {body}')
 
-    response = {
-        "status": 200,
-        "status_message": "terima_data OK",
-        "headers": headers,
-        "params": params,
-        "body": body
-    }
-    print(response)
-    return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
+    response = "ok"
+    print(f'response: {response}')
+    return response
   
 if __name__ == '__main__':
     print("Starting server...")
