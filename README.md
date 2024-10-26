@@ -12,21 +12,38 @@ Refresh lagi tentang html
 <!DOCTYPE html>                     <!-->definisikan bahwa ini adalah sebuah dokumen html<-->
 <html>                              <!-->definisi dokumen `root` / `paling atas`<-->
     <body>                          <!-->konten dari html page<-->
-        <h1>Title</h1>              <!-->Sebuah title<-->
+        <h1>Heading1</h1>           <!-->Sebuah Heading1<-->
         <p>paragraph</p>            <!-->Sebuah paragraf<-->
-        <a href="http://localhost:9999/index.html">link ke sebuah tempat</a>
+        <p>ini mulai paragraf ke 2</p>
+        <a href="https://twitter.com">X</a>
         <br></br>                   <!-->sebuah line break<-->
+        <h1>Heading1</h1> 
         <img src="/assets/cat.jpg"> <!-->mengembalikan sebuah image<-->
     </body>
 </html>
 ```
 
+References:
+- [Essential HTML tags](https://www.geeksforgeeks.org/essential-html-tags/)
+- [HTML Element Reference](https://www.w3schools.com/tags/ref_byfunc.asp)
+
 ## Flask pt.1
 [Flask](https://flask.palletsprojects.com/en/stable/) is a web framework written in Python. Jadi bukan hanya webserver, tapi sebuah tool untuk membuat web applications.
 
+### setup
+1. activate `venv`
+```
+python3 -m venv kelas
+source kelas/bin/activate
+```
+2. install requirements
+```
+python3 -m pip install Flask
+```
+
 1. import `flask`
 ```python
-import flask
+from flask import Flask
 ```
 
 2. inisialisasi object `Flask`
