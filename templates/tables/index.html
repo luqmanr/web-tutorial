@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        table, th, td {
+          border:1px solid rgb(255, 255, 255);
+        }
+        body {
+            background-color: black;
+            color: white;
+        }
+        
+    </style>
+    <body>
+        <table aria-label="Example of formatting in the table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th class="u-align--right">Cores</th>
+                <th class="u-align--right">RAM</th>
+                <th class="u-align--right">Disks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Example</th>
+                <td>Ready</td>
+                <td class="u-align--right">1</td>
+                <td class="u-align--right">1 GiB</td>
+                <td class="u-align--right">2</td>
+              </tr>
+              <tr>
+                <th>Very long long long example name that should wrap</th>
+                <td>Ready</td>
+                <td class="u-align--right">1</td>
+                <td class="u-align--right">1 GiB</td>
+                <td class="u-align--right">2</td>
+              </tr>
+              <tr>
+                <th class="u-truncate">Truncated very long long long example name</th>
+                <td>Ready</td>
+                <td class="u-align--right">8</td>
+                <td class="u-align--right">3.9 GiB</td>
+                <td class="u-align--right">3</td>
+              </tr>
+              <tr>
+                <th class="u-truncate">Images and Audio</th>
+                <td>Ready</td>
+                <td class="u-align--right">
+                    <img src="cat.jpg" width="80">
+                </td>
+                <td class="u-align--right">
+                    <audio controls>
+                        <source src="cat.mp3">
+                    </audio>
+                </td>
+                <td class="u-align--right">3</td>
+              </tr>
+            </tbody>
+        </table>
+        <form action="http://localhost:9999/submit_form">
+            <label for="fname">First name:</label><br>
+            <input type="text" id="fname" name="fname"><br>
+            <label for="lname">Last name:</label><br>
+            <input type="text" id="lname" name="lname"><br>
+            <input type="submit" value="Submit">
+        </form>
+        <p>Which one is your favorite language?</p>
+        <form action="http://localhost:9999/submit_form" method="get">
+            <input type="radio" id="html" name="fav_language" value="HTML">
+            <label for="html">HTML</label><br>
+            <input type="radio" id="css" name="fav_language" value="CSS">
+            <label for="css">CSS</label><br>
+            <input type="radio" id="javascript" name="fav_language" value="JavaScript">
+            <label for="javascript">JavaScript</label><br>
+            <input type="submit" value="Submit">
+        </form>
+    </body>
+</html>

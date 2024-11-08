@@ -90,3 +90,4 @@ def serve_index():
 - Headers = Metadata, key-value pair data
 - Body = Data dalam request
 - Query / Parameters = Data dalam bentuk URL
+
