@@ -91,3 +91,4 @@ def serve_index():
 - Body = Data dalam request
 - Query / Parameters = Data dalam bentuk URL
 
+Next Part: [Part 2](./readmes/2.md)
