@@ -4,11 +4,8 @@ import csv
 import os
 
 from flask import Flask, Response, request, redirect, url_for, render_template 
-from flask_cors import CORS
-
 
 app = Flask(__name__)
-cors = CORS(app)
 
 # @app.route('/')
 # async def main():
@@ -40,6 +37,7 @@ def contoh_function():
     return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
 
 @app.route('/submit_form', methods = ['GET', 'POST'])
+@app.route('/process', methods = ['GET', 'POST'])
 def submit_form():
     req_headers = dict(request.headers)
     print(f'headers: {req_headers}')
@@ -97,7 +95,7 @@ def csv_read():
         l += 1
     print(csv_headers)
     print(rows)
-    resp =''
+    resp = csv_data
     return resp
   
 if __name__ == '__main__':
