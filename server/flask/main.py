@@ -54,6 +54,15 @@ def submit_form():
         csv_file = open(csv_path, 'w')
         csv_file.write('fname,lname\n')
         csv_file.close()
+    else:
+        csv_file = open(csv_path, 'r')
+        csv_data = csv_file.read()
+        if len(csv_data) == 0:
+            csv_file.close()
+            csv_file = open(csv_path, 'w')
+            csv_file.write('fname,lname\n')
+        csv_file.close()
+
     csv_file = open(csv_path, 'a')
     csv_file.write(f'{req_params["fname"]},{req_params["lname"]}\n')
     csv_file.close()
