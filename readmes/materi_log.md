@@ -7,8 +7,8 @@
 4. ⁠data dari form masuk ke berkas CSV
 
 ## 9/11/2024
-1. belajar html <form>
-2. belajar html <table>
+1. belajar html `<form>`
+2. belajar html `<table>`
 3. belajar apa itu HTTP Request, URL, dsb
 4. Kirim form dari HTML ke Flask
 
