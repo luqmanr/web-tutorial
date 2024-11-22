@@ -116,7 +116,9 @@ def get_registered_users():
     # converting csv to html  
     db = 'registered_users.csv'
     df = pd.read_csv(db)
-    html = "<body style=\"background:black;color:white;\">" + df.to_html().replace("<table", "<table style=\"color:white;\"") + "</body>"
+    html = "<body style=\"background:black;color:white;font-family:Verdana;\">"
+    html += df.to_html()
+    html += "</body>"
     resp = render_template('table.html', tables=[html], titles=['']) 
     return resp
 
