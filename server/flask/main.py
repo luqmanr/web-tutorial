@@ -68,6 +68,11 @@ def submit_form():
     print(response)
     return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
 
+@app.route('/registration')
+def registration_form():
+    f = open('templates/registration.html', 'r')
+    return f.read()
+
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
     req_params = dict(request.args)
@@ -104,11 +109,6 @@ def register():
     }
     print(response)
     return response
-
-@app.route('/registration')
-def registration_form():
-    f = open('templates/registration.html', 'r')
-    return f.read()
 
 @app.route('/users') 
 @app.route('/users/get') 
