@@ -3,7 +3,7 @@ import pandas as pd
 import csv
 import os
 
-from flask import Flask, Response, request, redirect, url_for, render_template 
+from flask import Flask, Response, request, redirect, url_for, render_template, send_from_directory
 
 app = Flask(__name__)
 
@@ -21,20 +21,16 @@ app = Flask(__name__)
         # </body>
 #     """
 #     return html_template
-# '''
+
+@app.route('/<path:path>')
+def index(path):
+    return send_from_directory('templates', path) # must be in `./templates` folder
+
+
 @app.route('/index.html', methods = ['GET'])
 def serve_index():
     f = open('index.html', 'r')
     return f.read()
-# '''
-@app.route('/contoh_function', methods = ['GET'])
-def contoh_function():
-    response = {
-        "status": 200,
-        "status_message": "contoh_function OK"
-    }
-    print(response)
-    return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
 
 @app.route('/submit_form', methods = ['GET', 'POST'])
 @app.route('/process', methods = ['GET', 'POST'])
@@ -47,15 +43,19 @@ def submit_form():
 
     req_data = request.data
     print(f'data/body: {req_data}')
+    print(f'{",".join(list(req_params.keys()))}')
 
     # we can then do something with the variable `req_headers` & `req_params`
     csv_path = 'csv_file.csv'
     if not os.path.exists(csv_path):
         csv_file = open(csv_path, 'w')
-        csv_file.write('fname,lname\n')
+        csv_file.write(f'{",".join(list(req_params.keys()))}\n')
         csv_file.close()
     csv_file = open(csv_path, 'a')
-    csv_file.write(f'{req_params["fname"]},{req_params["lname"]}\n')
+    row = ""
+    for key in req_params.keys():
+        row += req_params[key] + ','
+    csv_file.write(f'{row[:-2]}\n')
     csv_file.close()
 
     response = {
@@ -68,34 +68,93 @@ def submit_form():
     print(response)
     return Response(jsonpickle.encode(response), mimetype="application/json", status=response['status'])
 
-@app.route('/table') 
-def table(): 
-    # converting csv to html 
-    data = pd.read_csv('sample_data.csv') 
-    print(data.to_html())
-    resp = render_template('table.html', tables=[data.to_html()], titles=['']) 
+@app.route('/register', methods = ['GET', 'POST'])
+def register():
+    req_params = dict(request.args)
+    username = req_params.get('username', None)
+    password = req_params.get('pass', None)
+
+    # we can then do something with the variable `req_headers` & `req_params`
+    csv_path = 'registered_users.csv'
+    if not os.path.exists(csv_path):
+        csv_file = open(csv_path, 'w')
+        csv_file.write('username,password\n')
+        csv_file.close()
+    
+    csv_file = open(csv_path, 'r')
+    rows = csv_file.read().split('\n')
+    for row in rows:
+        data = row.split(',')
+        registered_username = data[0]
+        if username == registered_username:
+            response = {
+                "status": 400,
+                "status_message": "user already exists!"
+            }
+            print(response)
+            return response
+
+    csv_file = open(csv_path, 'a')
+    csv_file.write(username + ',' + password + '\n')
+    csv_file.close()
+    response = {
+        "status": 200,
+        "status_message": "post_data OK",
+        "req_params": req_params
+    }
+    print(response)
+    return response
+
+@app.route('/registration')
+def registration_form():
+    f = open('templates/registration.html', 'r')
+    return f.read()
+
+@app.route('/users') 
+@app.route('/users/get') 
+def get_registered_users(): 
+    # converting csv to html  
+    db = 'registered_users.csv'
+    df = pd.read_csv(db)
+    html = "<body style=\"background:black;color:white;\">" + df.to_html().replace("<table", "<table style=\"color:white;\"") + "</body>"
+    resp = render_template('table.html', tables=[html], titles=['']) 
     return resp
 
-@app.route('/csv') 
-def csv_read(): 
-    # we can then do something with the variable `req_headers` & `req_params`
-    csv_path = 'csv_file.csv'
-    if not os.path.exists(csv_path):
-        return 'doesn\'t exist'
-    csv_data = open(csv_path, 'r').read()
-    csv_headers = []
-    rows = []
-    l = 0
-    for line in csv_data.split('\n'):
-        print(line)
-        if l == 0:
-            csv_headers = line.split(',')
-        else:
-            rows.append(line.split(','))
-        l += 1
-    print(csv_headers)
-    print(rows)
-    resp = csv_data
+@app.route('/users/delete') 
+def del_registered_users(): 
+    req_params = dict(request.args)
+    username = req_params.get('username', None)
+
+    # converting csv to html 
+    db = 'registered_users.csv'
+    df = pd.read_csv(db)
+    tmp_df = df.copy()
+    tmp_df = tmp_df[df.username != username]
+    if len(df.index) == len(tmp_df.index):
+        resp = {"status": 400, "message": "no users deleted"}
+    else:
+        resp = {"status": 200, "message": f'user deleted: {username}'}
+    tmp_df.to_csv(db, index=False)
+    return resp
+
+@app.route('/users/update_password') 
+def update_registered_users(): 
+    req_params = dict(request.args)
+    username = req_params.get('username', None)
+    password = req_params.get('pass', None)
+    old_password = req_params.get('old_pass', None)
+
+    # converting csv to html 
+    db = 'registered_users.csv'
+    df = pd.read_csv(db)
+    num_updated = len(df.loc[(df.username == username) & (df.password == old_password)])
+    df.loc[(df.username == username) & (df.password == old_password), ['password']] = password
+    if num_updated == 0:
+        resp = {"status": 400, "message": "no users updated"}
+        return resp
+    
+    df.to_csv(db, index=False)
+    resp = {"status": 200, "message": "ok"}
     return resp
   
 if __name__ == '__main__':
