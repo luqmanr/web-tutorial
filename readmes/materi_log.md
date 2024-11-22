@@ -40,4 +40,3 @@
 
 ## 24/08/2024
 1. lanjut belajar mssql
-2. 
