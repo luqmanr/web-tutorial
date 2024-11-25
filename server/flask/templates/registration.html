@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <div class="wrapper">
+            <form action="/register" class="content">
+                <label for="username">Username</label><br>
+                <input type="text" id="username" name="username"><br><br>
+                <label for="pass">Password</label><br>
+                <input type="password" id="pass" name="pass"><br>
+                <input type="checkbox" onclick="togglePassVisibility()">show password<br><br>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+    </body>
+    <style>
+        table, th, td {
+            border:1px solid rgb(255, 255, 255);
+        }
+        body {
+            background-color: rgb(34, 34, 34);
+        }
+        .wrapper {
+            color: white;
+            font-family: 'Verdana';
+            display: flex;
+            justify-content: center;
+            height: 90vh;
+        }
+        .content {
+            margin: auto;
+        }
+    </style>
+    <script>
+        function togglePassVisibility() {
+          var x = document.getElementById("pass");
+          if (x.type === "password") {
+            x.type = "text";
+          } else {
+            x.type = "password";
+          }
+        }
+    </script>
+</html>
