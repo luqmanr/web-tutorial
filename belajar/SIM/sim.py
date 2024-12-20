@@ -64,7 +64,7 @@ def get_karyawan():
             queried_user_index = df[df['nama'].str.lower() == queried_user.lower()].index
             queried_user_row = df.loc[queried_user_index]
             df = queried_user_row
-
+            
     if queried_age is not None:
         if len(queried_age) > 1:
             try:
@@ -112,6 +112,22 @@ def del_users():
         csv_file.write('\n')
     csv_file.close()
     return "sukses delete: " + nama
+
+def del_users_with_pandas(): 
+    req_params = dict(request.args)
+    nama = req_params.get('nama', None)
+
+    # converting csv to html 
+    db = 'karyawan.csv'
+    df = pd.read_csv(db)
+    new_df = df.copy()
+    new_df = new_df[df.nama != nama]
+    if len(df.index) == len(new_df.index):
+        resp = "tidak ada yang dihapus"
+    else:
+        resp = f"{nama} dihapus"
+    new_df.to_csv(db, index=False)
+    return resp
 
 @app.route('/karyawan/update') 
 def update_users(): 
