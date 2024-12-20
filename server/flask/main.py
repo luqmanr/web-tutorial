@@ -2,6 +2,7 @@ import jsonpickle
 import pandas as pd 
 import csv
 import os
+from io import StringIO
 
 from flask import Flask, Response, request, redirect, url_for, render_template, send_from_directory
 
@@ -121,10 +122,19 @@ def register():
 
 @app.route('/users') 
 @app.route('/users/get') 
-def get_registered_users(): 
+def get_registered_users():   
+    req_params = dict(request.args)
+    queried_user = req_params.get('username', None)
+    
     # converting csv to html  
     db = 'registered_users.csv'
     df = pd.read_csv(db)
+    
+    if queried_user is not None:
+        if len(queried_user) > 1:
+            queried_user_row = df.loc[df['username'] == queried_user]
+            df = queried_user_row
+    
     html = "<body style=\"background:black;color:white;font-family:Verdana;\">"
     html += df.to_html()
     html += "</body>"
