@@ -64,6 +64,7 @@ def get_karyawan():
             queried_user_index = df[df['nama'].str.lower() == queried_user.lower()].index
             queried_user_row = df.loc[queried_user_index]
             df = queried_user_row
+            
     if queried_age is not None:
         if len(queried_age) > 1:
             try:
@@ -73,6 +74,7 @@ def get_karyawan():
                df = queried_user_row
             except:
                 pass
+
     if queried_city is not None:
         if len(queried_city) > 1:
             queried_user_index = df[df['kota'].str.lower() == queried_city.lower()].index
