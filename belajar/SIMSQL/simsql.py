@@ -1,7 +1,15 @@
 import sqlite3
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, send_from_directory
 
 app = Flask(__name__)
+
+@app.route('/css/<path:path>')
+def send_css(path):
+    return send_from_directory('css', path)
+
+@app.route('/images/<path:path>')
+def send_images(path):
+    return send_from_directory('images', path)
 
 @app.route('/')
 @app.route('/index.html')
