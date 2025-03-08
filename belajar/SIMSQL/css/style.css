@@ -1,33 +1,42 @@
-li {
+
+h1.title {
+    background-color: skyblue;
     text-align: center;
+    font-family: Impact;
+}
+h2.subtitle {
+    text-align: left;
+    font-family: Helvetica;
+}
+
+li.menu {
+    text-align: left;
     font-size: 18px;
     font-family: Helvetica;
     font-weight: bold;
     list-style-type: none;
 }
-p {
-    text-align: center;
-    font-family: Helvetica;
-}
-h1 {
-    background-color: skyblue;
-    text-align: center;
-    font-family: Impact;
-}
-a {
-    text-decoration: none;
+a  {
+    color: rgba(70, 35, 150, 1.0);
 }
 a:hover {
     color: red;
 }
 
-.title {
+img.title {
     display: block;
     margin-left: auto;
     margin-right: auto;
     width: 10%;
 }
 
-.footer {
+img.footer {
     width: 5%;
+}
+
+div {
+    width: 300px;
+    border: 15px solid green;
+    padding: 50px;
+    margin: 20px;
 }
