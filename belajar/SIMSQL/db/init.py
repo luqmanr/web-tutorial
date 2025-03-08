@@ -1,12 +1,12 @@
 import sqlite3
 
-con = sqlite3.connect('./sim.db')
+con = sqlite3.connect('sim.db')
 
 statement = """
     CREATE TABLE sales(
         cabang TEXT,
         tanggal TEXT,
-        penjualan FLOAT
+        penjualan INTEGER
     );
 """
 

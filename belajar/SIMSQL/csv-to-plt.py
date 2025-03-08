@@ -21,6 +21,7 @@ for filename in os.listdir(directory):
             df = pd.read_csv(filepath)
             # Add 'store' column with filename minus '.csv'
             df['store'] = filename.replace('.csv', '')
+            # df['store'] = filename.split(".")[0] # => dago
             dataframes.append(df)
             print(f"Successfully read {filename}")
         except Exception as e:
@@ -33,17 +34,19 @@ for d in dataframes:
 if len(dataframes) > 0:
     combined_df = pd.concat(dataframes, ignore_index=True)
     combined_df = combined_df.sort_values(by=['tanggal'], ascending=True)
-    plt.figure(figsize=(15, 8))
-    sns.barplot(x='tanggal', y='sales', hue='store', data=combined_df)
+    plt.figure(figsize=(10, 5))
+    sns.lineplot(x='tanggal', y='sales', hue='store', data=combined_df, marker='o', markersize=20)
+    # sns.barplot(x='tanggal', y='sales', hue='store', data=combined_df, dodge=False)
 
     # Set plot labels and title
     plt.xlabel('Tanggal')
     plt.ylabel('Sales')
     plt.title('Sales for All Stores (Grouped by Date)')
-    plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels
+    plt.xticks(rotation=0, ha='right')  # Rotate x-axis labels
     plt.legend(title='Store')  # Add a legend with a title
     plt.tight_layout()
     plt.savefig('./result.png')
+    plt.show()
 
 else:
     print('tidak ada csv yang bisa dijadikan dataframe')

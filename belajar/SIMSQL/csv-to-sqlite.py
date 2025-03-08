@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-
 import sqlite3
 
 def insert_row(con, cabang, tanggal, penjualan):
@@ -21,8 +20,6 @@ def insert_row(con, cabang, tanggal, penjualan):
         print(f'failed to insert into table: {e}')
         return False
 
-# connect to sqlite database
-con = sqlite3.connect('./db/sim.db')
 
 # Directory containing CSV files
 directory = 'data'
@@ -55,5 +52,10 @@ else:
     combined_df = combined_df.sort_values(by=['tanggal'], ascending=True)
 
     # insert to sqlite
-    for i,row in combined_df.iterrows():
+
+    # connect to sqlite database
+    con = sqlite3.connect('./db/sim.db')
+    for index,row in combined_df.iterrows():
+
+        print('akan memasukkan:', row['store'], row['tanggal'], row['sales'])
         inserted = insert_row(con, row['store'], row['tanggal'], row['sales'])
