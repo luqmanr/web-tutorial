@@ -4,3 +4,8 @@
 2. convert into pandas
 3. insert into SQL
 4. plot to matplotlib
+
+# streamlit plotting
+1. Setup streamlit
+2. SQL to pandas
+3. plot in streamlit
