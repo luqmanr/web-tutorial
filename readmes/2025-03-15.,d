@@ -1,0 +1,6 @@
+# DBASE4 to SQL
+
+1. read dbase4 file,
+2. convert into pandas
+3. insert into SQL
+4. plot to matplotlib
