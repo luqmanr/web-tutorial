@@ -2,10 +2,12 @@ import imaplib
 import email
 from email.header import decode_header
 
+import config
+
 # Gmail IMAP server
-IMAP_SERVER = "imap.borma.com"
-EMAIL_ACCOUNT = "andre@borma.cc"
-EMAIL_PASSWORD = "passwordbiasa"
+IMAP_SERVER = "imap.gmail.com"
+EMAIL_ACCOUNT = "luqman.rahardjo@gmail.com"
+EMAIL_PASSWORD = config.APP_PASSWORD
 
 # Connect to the IMAP server
 mail = imaplib.IMAP4_SSL(IMAP_SERVER)
@@ -21,7 +23,7 @@ status, messages = mail.search(None, "ALL")
 # Convert messages to a list of email IDs
 email_ids = messages[0].split()
 
-# Fetch the latest 5 emails
+# Fetch the latest 2 emails
 for email_id in email_ids[-2:]:
     status, msg_data = mail.fetch(email_id, "(RFC822)")
     
