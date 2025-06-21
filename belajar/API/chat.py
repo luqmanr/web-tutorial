@@ -1,7 +1,8 @@
 import requests
+import config
 
 # go to https://aistudio.google.com/app/apikey
-API_KEY = 'AIzaSyDcNMnHAH9cGZSay0vSobaoQTm5gJhP4Nw'
+API_KEY = config.APIKEY
 URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}'
 headers = {
     'Content-Type': 'application/json'
