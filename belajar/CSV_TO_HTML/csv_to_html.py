@@ -34,8 +34,8 @@ def generate_html_table_from_csv(csv_data: str) -> str:
     # Build the table header (thead)
     thead_html = "<thead>\n<tr>\n"
     for header in headers:
-        thead_html += f'                            <th class="px-6 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>\n'
-    thead_html += "                        </tr>\n                    </thead>\n"
+        thead_html += f'<th class="px-6 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>\n'
+    thead_html += "</tr>\n</thead>\n"
 
     # Build the table body (tbody)
     tbody_html = "                    <tbody>\n"
@@ -52,9 +52,9 @@ def generate_html_table_from_csv(csv_data: str) -> str:
                 encoded_name = urllib.parse.quote_plus(cell)
                 # Create the clickable link for the Name column
                 cell_content = f'<a href="https://google.com/search?q={encoded_name}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">{cell}</a>'
-            tbody_html += f'                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{cell_content}</td>\n'
-        tbody_html += "                        </tr>\n"
-    tbody_html += "                    </tbody>\n"
+            tbody_html += f'<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{cell_content}</td>\n'
+        tbody_html += "</tr>\n"
+    tbody_html += "</tbody>\n"
 
     # Construct the full HTML document
     full_html = f"""<!DOCTYPE html>
