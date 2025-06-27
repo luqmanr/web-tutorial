@@ -142,13 +142,15 @@ def generate_html_table_from_csv(csv_data: str) -> str:
 
 # Example Usage:
 if __name__ == "__main__":
-    sample_csv_data = """Name,Age,City,Occupation
-Alice,30,New York,Engineer
-Bob,24,Los Angeles,Artist
-Charlie,35,Chicago,Doctor
-Diana,28,Houston,Designer
-Eve,32,Miami,Teacher
-Frank,29,Seattle,Developer""" # Added a new row for demonstration
+#     sample_csv_data = """Name,Age,City,Occupation
+# Alice,30,New York,Engineer
+# Bob,24,Los Angeles,Artist
+# Charlie,35,Chicago,Doctor
+# Diana,28,Houston,Designer
+# Eve,32,Miami,Teacher
+# Frank,29,Seattle,Developer""" # Added a new row for demonstration
+
+    sample_csv_data = open("random.csv", "r").read()
 
     generated_html = generate_html_table_from_csv(sample_csv_data)
 
