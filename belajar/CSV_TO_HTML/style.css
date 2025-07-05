@@ -1,0 +1,13 @@
+.header {
+    font-style:bold;
+    font-family:"Serif";
+    color:red;
+    background-color:rgba(20,20,20,255);
+}
+
+#header {
+    font-style:bold;
+    font-family:"Sans Serif";
+    color:blue;
+    background-color:rgba(20,20,20,255);
+}

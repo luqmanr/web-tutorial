@@ -7,7 +7,7 @@ import os
 # This file defines the paths to your training/validation images and labels,
 # as well as the class names.
 # Make sure this path is correct for your system.
-DATA_YAML_PATH = 'coco.yaml'
+DATA_YAML_PATH = 'coco8.yaml'
 
 # Specify the pre-trained model to use.
 # For YOLOv8, you can use 'yolov8n.pt' (nano), 'yolov8s.pt' (small),
@@ -18,7 +18,7 @@ MODEL_NAME = 'yolov8n.pt'
 
 # Number of training epochs. More epochs can lead to better performance
 # but also increase training time and risk of overfitting.
-NUM_EPOCHS = 50
+NUM_EPOCHS = 5
 
 # Image size for training. Images will be resized to this dimension.
 # Common sizes are 640, 1280.
