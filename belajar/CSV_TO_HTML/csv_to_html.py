@@ -23,7 +23,7 @@ def generate_html_table_from_csv(csv_data: str) -> str:
     except StopIteration:
         return "<p>Error: CSV data is empty or malformed (no header row).</p>"
 
-    # Find the index of the 'Name' column for creating links
+    # Find the index of the 'Name' column for creating links, if applicable
     name_column_index = -1
     try:
         name_column_index = headers.index('Name')
@@ -38,13 +38,13 @@ def generate_html_table_from_csv(csv_data: str) -> str:
     thead_html += "</tr>\n</thead>\n"
 
     # Build the table body (tbody)
-    tbody_html = "                    <tbody>\n"
+    tbody_html = "<tbody>\n"
     for row in reader:
         # Skip empty rows that might result from trailing newlines
         if not any(row):
             continue
 
-        tbody_html += "                        <tr>\n"
+        tbody_html += "<tr>\n"
         for i, cell in enumerate(row):
             cell_content = cell
             if i == name_column_index:
@@ -57,7 +57,8 @@ def generate_html_table_from_csv(csv_data: str) -> str:
     tbody_html += "</tbody>\n"
 
     # Construct the full HTML document
-    full_html = f"""<!DOCTYPE html>
+    full_html = f"""
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
