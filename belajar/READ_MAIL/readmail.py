@@ -1,6 +1,7 @@
 import imaplib
 import email
 from email.header import decode_header
+import time
 
 import config
 
@@ -17,8 +18,8 @@ mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
 mail.select("inbox")
 
 # Search for all emails
-# status, messages = mail.search(None, "UNSEEN")
-status, messages = mail.search(None, "ALL")
+status, messages = mail.search(None, "UNSEEN")
+# status, messages = mail.search(None, "ALL")
 # print(status, messages)
 # isi variable `messages` = [b'1 2 9 20 203'] => '1 2 9 20 203' => [1,2,9,20,203]
 # print(messages[0].decode('utf-8'))
@@ -62,7 +63,7 @@ for email_id in email_ids[-2:]:
                         f.close()
                     elif content_type == 'image/jpg':
                         body = body.decode()
-                        f = open('image.jpg', 'w')
+                        f = open(f'{time.time()}-image.jpg', 'w')
                         f.write(body)
                         f.close()
                     elif content_type == 'text/html':

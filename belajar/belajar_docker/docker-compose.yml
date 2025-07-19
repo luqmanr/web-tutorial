@@ -4,6 +4,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: python6an/flask:0.0.1
+    image: python6an/flask:0.0.2
     ports:
       - "5001:5001"
