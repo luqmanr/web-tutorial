@@ -7,8 +7,8 @@ from email.mime.multipart import MIMEMultipart
 import config
 
 # Your Gmail credentials
-SENDER_EMAIL = "luqman.rahardjo@gmail.com"  # Replace with your Gmail address
-SENDER_PASSWORD = config.APP_PASSWORD  # Replace with your App Password or Gmail password
+SENDER_EMAIL = config.EMAIL_ACCOUNT  # Replace with your Gmail address
+SENDER_PASSWORD = config.EMAIL_PASSWORD  # Replace with your App Password or Gmail password
 
 # Recipient details
 RECEIVER_EMAIL = open('penerima.txt', 'r').read().split() # Replace with the recipient's email address
@@ -42,8 +42,8 @@ def send_gmail_email(sender_email, sender_password, receiver_email, subject, bod
 
 if __name__ == "__main__":
     for receiver in RECEIVER_EMAIL:
-        if receiver == 'andre@gmail.com':
-            BODY = 'Halo'
-        elif receiver == 'luqman':
+        # if receiver == 'andre@gmail.com':
+        #     BODY = 'Halo'
+        if receiver == 'luqman.rahardjo@gmail.com':
             BODY = 'hei'
         send_gmail_email(SENDER_EMAIL, SENDER_PASSWORD, receiver, SUBJECT, BODY)

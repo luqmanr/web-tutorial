@@ -6,9 +6,9 @@ import time
 import config
 
 # Gmail IMAP server
-IMAP_SERVER = "imap.gmail.com"
-EMAIL_ACCOUNT = "luqman.rahardjo@gmail.com"
-EMAIL_PASSWORD = config.APP_PASSWORD
+IMAP_SERVER = config.IMAP_SERVER
+EMAIL_ACCOUNT = config.EMAIL_ACCOUNT
+EMAIL_PASSWORD = config.EMAIL_PASSWORD
 
 # Connect to the IMAP server
 mail = imaplib.IMAP4_SSL(IMAP_SERVER)

@@ -1,14 +1,65 @@
-[image: Google]
-App password created to sign in to your account
+Email not displaying correctly? View it online
 
+First Gemini Embedding model is here 🚀
 
-luqman.rahardjo@gmail.com
-If you didn't generate this password for python6an, someone might be using
-your account. Check and secure your account now.
-Check activity
-<https://accounts.google.com/AccountChooser?Email=luqman.rahardjo@gmail.com&continue=https://myaccount.google.com/alert/nt/1750460865817?rfn%3D20%26rfnc%3D1%26eid%3D2138916096556510073%26et%3D0>
-You can also see security activity at
-https://myaccount.google.com/notifications
-You received this email to let you know about important changes to your
-Google Account and services.
-© 2025 Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA
+Start  
+building<https://c.gle/ANiao5ogXYtBs_mqMhSIL2EfHRqMZ2uIr_e8QrRMEwmnOLDX4bVG9dW5yfboxGblkv2R3zwQydO2o5kmUr5JwTQ1CuT_GnsurMf8kPTiWWE38L8pIghSOMGLPiWqvWpN19oaiwv5WMYuOpR_w5nvHE3VYLI5ulA5yg-twxojOg8bsN077Nu6YO8hXTcVX0CbupuahB79-mRZ3vSG43xAUOO5fo2LStyCtACVizuwP6i1iq0ehc-SuTBiifA9sj6sFhUe4kMSewMG>
+
+The new Gemini Embedding model is now live in the Gemini API. Start  
+building better retrieval-augmented generation (RAG), classification, and  
+search today.
+
+It’s our most powerful and versatile text embedding model ever, achieving  
+top-ranking scores on the Massive Text Embedding Benchmark (MTEB)  
+leaderboard, and is priced at $0.15 USD per million tokens. Gemini  
+Embedding supports 100+ languages and has a controllable embedding size.
+
+You can generate text embeddings by using the embed_content method:
+
+from google import genai
+
+client = genai.Client()
+
+result = client.models.embed_content(
+
+model="gemini-embedding-001",
+
+contents="What is the meaning of life?"
+
+)
+
+print(result.embeddings)
+
+New to embeddings? Check out this embedding crash  
+course<https://c.gle/ANiao5qAm4eceOfVSc3gVwJNZnq3FGpfVtpXQgm6IIhLiQN4L7ugt0uKOatw8qVQDjOIkPzP-yJfZ4Fw8r0GqG-gRoaRsBIcwhACrpCmP-gFfO3icGPt7h0t_7G90dAkkztEXddUUAMQNVRr4N0CHBzK9FEAIN5hUtHzhceMKO0hF_H5B4tqWbxdkIdMgSwi_Jjpbcqvpcd1lIlzXiplY6gTiHfT0HIkw7EHJLupiijVG4-Dybsup9REFSvk83kZSvyxj_Kqit_NpyopM2WmPMpnBZ4cyV2SmSUZ2Oxzttt_6OCfVC_I>.
+
+Happy coding,
+
+The Google AI Studio team
+
+Google AI Release  
+Notes<https://c.gle/ANiao5oy5kEbvH6lFRClf8kBjLCr8y_A8AeR56I74CduAoP-dueI8IYEDEfJEpEeVJ-lMDN3CbcwtDtH4zWtMpnnxgO8s2fS_tvxjtLecYOi7LZv6mmf1KDHAd5bWWi9bfnWU_DZMAInmbWB5mLvbwFD>
+
+Building with multimodal AI
+
+Discover how Gemini’s multimodal understanding is unlocking a new class of  
+vision-powered apps and context-aware software with insights from Gemini’s  
+multimodal product lead, Ani Baddepudi.
+
+Watch the  
+video<https://c.gle/ANiao5qpO9XWh5KFM1Jmy3vgXTUkpZIDRt3gS6sCkx2e8yORNulZBtEEBQPtF1MibtrscRERM9SOw_g3z0m6cDT7_c40DWridd7Ij064-5c2r19JCNexFEdeFlObgKOLUkuNRwP3gWNYAD-rJuLNEYWrt1f04bfUAA>
+
+Did you know?
+
+You can get significantly higher request limits and flexible pay-as-you-go  
+pricing with a paid tier.
+
+Explore paid  
+tier<https://c.gle/ANiao5oJrikvFiWFL78LYl6nTd6yKQuNx3uEkSNQbu3i7rs0q7mtFpkkD0BTi55x6Kaip42agrLopH-04oXOSXxcUwJ2h_NWANzzuf8f3vyQ-TmP99ZqS5MTUtZlGJEV2QShBLcwmVBB5LQEgX9H909NystxzqCblewGjCxBO6uUqGNe_pqOK2oBy9Hp_SpDzh2ZPVwpyn4-E-PvjcU849EqM-RiZYotKyOFn9MJmAiiKtQFKlDCAeGoxwRZiqaL339pn_CVEDtlmGBK8m2PRH3idw>
+
+© 2025 Google LLC 1600 Amphitheatre Parkway, Mountain View, CA 94043
+
+This email was sent to luqman.rahardjo@gmail.com because you signed up to  
+receive emails about Google AI. If you do not wish to receive these emails,  
+please  
+unsubscribe<https://myaccount.google.com/communication-preferences/unsubscribe/gt/ANiao5rc9CXUcurL0WsXYTnXGZ8V2VrAXFdlrsGsXldO7d-Dp-QYIY-Byhsg9W7E16GVMOB92kcgYktxxsKBKlyrIk0H8cUT1WmtAg3DWX8DRxAMj39DEM5iLet0Ivv_CAZnlpgRNTJzoj9eqS0HizXYthyZNudTFPCWBVTx0_27HHdxYImtCsM96qnW6ZdA2RULm04f5sb9_bsEL8VksEnN-LLYizJmXb4TnO3q4jnMmwKvWyR7aeQ?utm_source=gm&utm_medium=email&auto=true>.
