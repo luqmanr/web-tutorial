@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material-Inspired Website</title>
+    <!--
+        This is a simple single-page website created with Tailwind CSS.
+        It emulates a Material Design aesthetic using shadows, rounded corners,
+        and a clean, card-based layout.
+    -->
+
+    <!-- Import Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Import Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Tailwind configuration for colors and fonts -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            500: '#1e88e5',
+                            600: '#1976d2',
+                        },
+                        accent: {
+                            500: '#ffc107',
+                        },
+                        surface: '#ffffff',
+                        background: '#f1f5f9',
+                        text: '#1f2937',
+                        'text-secondary': '#6b7280',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            /* Use the custom background color and font family */
+            background-color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation Bar -->
+    <header class="bg-primary-500 text-white shadow-lg">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">Brand Name</a>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-gray-200 transition-colors">Home</a>
+                <a href="#" class="hover:text-gray-200 transition-colors">About</a>
+                <a href="#" class="hover:text-gray-200 transition-colors">Services</a>
+                <a href="#" class="hover:text-gray-200 transition-colors">Contact</a>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu (hidden by default) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-primary-600 text-white shadow-lg">
+        <a href="#" class="block px-6 py-3 border-b border-primary-500 hover:bg-primary-500 transition-colors">Home</a>
+        <a href="#" class="block px-6 py-3 border-b border-primary-500 hover:bg-primary-500 transition-colors">About</a>
+        <a href="#" class="block px-6 py-3 border-b border-primary-500 hover:bg-primary-500 transition-colors">Services</a>
+        <a href="#" class="block px-6 py-3 hover:bg-primary-500 transition-colors">Contact</a>
+    </div>
+
+    <!-- Main Content Section -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Hero Section -->
+        <div class="bg-primary-500 text-white p-12 rounded-2xl shadow-lg mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Welcome to Our Service</h1>
+            <p class="text-xl mb-6">
+                Discover a new way to work with our innovative and user-friendly platform.
+            </p>
+            <button class="bg-accent-500 text-white font-semibold py-3 px-8 rounded-full shadow-md hover:shadow-xl transition-all duration-300">
+                Get Started
+            </button>
+        </div>
+
+        <!-- Cards Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Feature Card 1 -->
+            <div class="bg-surface p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="text-4xl text-primary-500 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold text-text mb-2">Intuitive Interface</h2>
+                <p class="text-text-secondary">
+                    Our platform is designed with simplicity and ease of use in mind, so you can get started quickly without any hassle.
+                </p>
+            </div>
+
+            <!-- Feature Card 2 -->
+            <div class="bg-surface p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="text-4xl text-primary-500 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold text-text mb-2">Powerful Features</h2>
+                <p class="text-text-secondary">
+                    Access a wide range of powerful tools and features to streamline your workflow and boost productivity.
+                </p>
+            </div>
+
+            <!-- Feature Card 3 -->
+            <div class="bg-surface p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="text-4xl text-primary-500 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold text-text mb-2">Responsive Design</h2>
+                <p class="text-text-secondary">
+                    Our website works perfectly on all devices, from desktop computers to smartphones and tablets.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12 py-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2024 Your Brand. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Mobile Menu Toggle -->
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+
+</body>
+</html>
