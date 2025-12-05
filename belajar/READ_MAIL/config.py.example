@@ -1,1 +1,3 @@
-APP_PASSWORD='sebuah password dari google'
+EMAIL_PASSWORD='sebuah password dari google'
+EMAIL_ACCOUNT='youemail@gmail.com`
+IMAP_SERVER='imap.google.com'
