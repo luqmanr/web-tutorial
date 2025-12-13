@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from io import BytesIO
+import time
 
 # Membuat driver Chrome
 chrome_options = Options()
@@ -13,6 +14,7 @@ driver = webdriver.Remote(
     command_executor='http://localhost:4444/wd/hub',
     options=chrome_options
 )
+chrome_options.add_experimental_option("detach", True)
 
 # Buka halaman login
 url = "https://the-internet.herokuapp.com/login" # Changed URL to the-internet.herokuapp.com/login
@@ -28,19 +30,17 @@ username_field.send_keys("tomsmith") # Changed username
 password_field.send_keys("SuperSecretPassword!") # Changed password
 
 # ### 2. Menemukan Tombol Submit dan Klik
-
 submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@type='submit']")))
 submit_button.click()
 
 # ### 3. Memeriksa Apakah Login Berhasil atau Gagal
-
 # Cek apakah halaman berhasil dimuat atau terdapat pesan error
 # Tutup driver dan capture screenshot
 try:
     # Tambahkan code untuk mengecek flash message dan mengambil screenshot
-    # flash_message_element = wait.until(EC.presence_of_element_located((By.ID, "flash")))
+    flash_message_element = wait.until(EC.presence_of_element_located((By.ID, "flash")))
     # flash_message_element = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div")))
-    flash_message_element = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"flash\"]")))
+    # flash_message_element = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"flash\"]")))
     # Tutup driver
     if "You logged into a secure area!" in flash_message_element.text:
         print("Login berhasil!")
