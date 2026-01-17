@@ -2,6 +2,8 @@ import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
+import config
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -30,7 +32,7 @@ def main() -> None:
     # Replace "YOUR_BOT_TOKEN" with your actual bot token from BotFather
     # For security, you might want to load this from an environment variable
     # or a configuration file in a real application.
-    BOT_TOKEN = "YOUR_BOT_TOKEN" 
+    BOT_TOKEN = config.BOT_TOKEN
 
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(BOT_TOKEN).build()
