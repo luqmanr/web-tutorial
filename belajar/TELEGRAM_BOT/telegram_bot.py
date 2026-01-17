@@ -20,10 +20,18 @@ async def start(update: Update, context: CallbackContext) -> None:
         f"Hi {user.mention_html()}! I'm an echo bot. Send me any text message!",
     )
 
+async def update_table(update: Update, context: CallbackContext) -> None:
+    """Sends a welcome message when the command /start is issued."""
+    # update_table() # do something
+    await update.message.reply_html(
+        f"Table has been updated successfully! Tapi BOHONG :D {update.message.text}",
+    )
+    
+
 async def echo(update: Update, context: CallbackContext) -> None:
     """Echoes the user message."""
     # update.message.text contains the text sent by the user
-    await update.message.reply_text(update.message.text)
+    await update.message.reply_text(update.message.text + f" jumlah character {len(update.message.text)}")
 
 # --- Main Function ---
 
@@ -40,6 +48,7 @@ def main() -> None:
     # Register handlers
     # CommandHandler handles commands (e.g., /start)
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("update_table", update_table))
 
     # MessageHandler handles regular messages.
     # filters.TEXT ensures it only processes text messages.

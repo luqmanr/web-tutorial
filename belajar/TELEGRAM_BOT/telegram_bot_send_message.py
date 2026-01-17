@@ -3,7 +3,7 @@ from telegram import Bot
 import config
 # Replace these with your actual credentials
 BOT_TOKEN = config.BOT_TOKEN
-CHAT_ID = '784391418'
+CHAT_ID = config.CHAT_ID
 
 async def send_targeted_message():
     # Initialize the bot
