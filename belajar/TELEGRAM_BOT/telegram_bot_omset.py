@@ -88,6 +88,7 @@ async def query_omset_by_date(update: Update, context: CallbackContext) -> None:
     cursor.execute('SELECT cabang, tanggal, total_rupiah FROM omset WHERE tanggal = ?', (date_str,))
     rows = cursor.fetchall()
     conn.close()
+    print(rows, date_str)
 
     response = format_report_table(rows, date_str)
     await update.message.reply_html(response)
