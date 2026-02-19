@@ -100,7 +100,11 @@ async def query_by_branch_date(update: Update, context: CallbackContext) -> None
         WHERE 
             branch LIKE '%{branch}%'
         AND
-            tanggal_jatuh_tempo = '{date_str}'
+                '{date_str}' 
+            BETWEEN 
+                tanggal_pembelian 
+            AND 
+                tanggal_jatuh_tempo
             ''')
             
     rows = cursor.fetchall()

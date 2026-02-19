@@ -1,6 +1,7 @@
 import asyncio
 from telegram import Bot
 import config
+
 # Replace these with your actual credentials
 BOT_TOKEN = config.BOT_TOKEN
 CHAT_ID = config.CHAT_ID
@@ -19,3 +20,4 @@ async def send_targeted_message():
 
 if __name__ == '__main__':
     asyncio.run(send_targeted_message())
+    

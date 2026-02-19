@@ -4,7 +4,7 @@ import config
 # Replace these with your actual credentials
 BOT_TOKEN = config.BOT_TOKEN
 CHAT_ID = '784391418'
-TARGET_MESSAGE_ID = 67  # The ID of the message you want to reply to
+TARGET_MESSAGE_ID = 195  # The ID of the message you want to reply to
 
 async def send_targeted_message():
     # Initialize the bot

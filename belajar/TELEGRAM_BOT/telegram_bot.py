@@ -11,51 +11,36 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# --- Command Handlers ---
-
 async def start(update: Update, context: CallbackContext) -> None:
-    """Sends a welcome message when the command /start is issued."""
     user = update.effective_user
-    await update.message.reply_html(
-        f"Hi {user.mention_html()}! I'm an echo bot. Send me any text message!",
-    )
+    chat_id = update.message.chat_id
+
+    if str(chat_id) == config.CHAT_ID:
+        await update.message.reply_html(
+            f"Halo, cuma kamu yang bisa kasih perintah ke saya, {user.mention_html()}! Selamat datang di bot saya. Kamu bisa mengirimkan pesan apa saja, dan saya akan membalasnya dengan jumlah karakter yang kamu kirimkan.",
+        )
+    else:
+        await update.message.reply_html(
+            f"Hi {user.mention_html()} with chat_id: {chat_id} I'm an echo bot. Send me any text message!",
+        )
 
 async def update_table(update: Update, context: CallbackContext) -> None:
-    """Sends a welcome message when the command /start is issued."""
-    # update_table() # do something
     await update.message.reply_html(
         f"Table has been updated successfully! Tapi BOHONG :D {update.message.text}",
     )
-    
 
 async def echo(update: Update, context: CallbackContext) -> None:
-    """Echoes the user message."""
-    # update.message.text contains the text sent by the user
     await update.message.reply_text(update.message.text + f" jumlah character {len(update.message.text)}")
 
-# --- Main Function ---
-
 def main() -> None:
-    """Start the bot."""
-    # Replace "YOUR_BOT_TOKEN" with your actual bot token from BotFather
-    # For security, you might want to load this from an environment variable
-    # or a configuration file in a real application.
     BOT_TOKEN = config.BOT_TOKEN
 
-    # Create the Application and pass it your bot's token.
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Register handlers
-    # CommandHandler handles commands (e.g., /start)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("update_table", update_table))
-
-    # MessageHandler handles regular messages.
-    # filters.TEXT ensures it only processes text messages.
-    # ~filters.COMMAND ensures it doesn't process commands as regular text.
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # Run the bot until the user presses Ctrl-C
     logger.info("Bot started. Press Ctrl-C to stop.")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
