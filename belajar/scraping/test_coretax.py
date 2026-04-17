@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 
 def run_automated_task():
     chrome_options = Options()
@@ -43,6 +44,8 @@ def run_automated_task():
         wait = WebDriverWait(driver, 60)
         username_field = wait.until(EC.presence_of_element_located((By.ID, "Username")))
         password_field = wait.until(EC.presence_of_element_located((By.ID, "password")))
+        username_field.send_keys("0022446967441000")
+
 
         # 5. Wait for Login (Fixed typo here)
         wait = WebDriverWait(driver, 120)
@@ -60,7 +63,54 @@ def run_automated_task():
         except Exception as e:
             print(f"Failed to click the refresh button: {e}")
 
-        time.sleep(300)
+        button_locator = (By.ID, "ActionDownloadButton")
+
+        wait = WebDriverWait(driver, 120)
+        wait.until(
+            EC.visibility_of_element_located(button_locator)
+        )
+
+        total_pages = 3
+        for i in range(total_pages):
+
+            # 3. Iterate through buttons by index to avoid StaleElementReferenceException
+            # After each click/download, the DOM might refresh, so we re-find the list
+            num_buttons = len(driver.find_elements(*button_locator))
+            print(f"Found {num_buttons} download buttons.")
+
+            for i in range(num_buttons):
+                try:
+                    # Re-find elements in each loop to ensure they are fresh
+                    current_buttons = driver.find_elements(*button_locator)
+                    button = current_buttons[i]
+
+                    # Scroll to the button to ensure it's clickable
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+                    time.sleep(1) # Small pause for scroll stability
+
+                    # Click using JavaScript if standard click is intercepted by overlays
+                    driver.execute_script("arguments[0].click();", button)
+                    
+                    print(f"Clicked button {i+1} of {num_buttons}")
+                    
+                    # Wait for any potential loading spinner to disappear before next click
+                    # This is specific to the Coretax UI which often uses overlays
+                    time.sleep(3) 
+
+                except StaleElementReferenceException:
+                    # If the page shifted, restart the index or retry this index
+                    print("DOM refreshed, retrying current button index...")
+                    time.sleep(2)
+                    if i > 0:
+                        i -= 1  # Step back to retry the same index
+                    continue
+                except Exception as e:
+                    print(f"Error clicking button {i}: {e}")
+            
+            time.sleep(5)
+            next_button = driver.find_element(By.XPATH, "/html/body/regportal-root/div/ui-coretax-one-column-layout/div/div/div/dcmshr-documents/div/div[2]/ui-grid/p-table/div/p-paginator/div/button[2]")
+            next_button.click()
+            time.sleep(10) # Wait for page to load after clicking next
 
         driver.find_elements(By.XPATH, "/html/body/regportal-root/div/ui-coretax-one-column-layout/div/div/div/dcmshr-documents/div/div[2]/ui-grid/p-table/div/div[2]/table/tbody/tr/td[1]/div/div[1]/span")
 
