@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # --- PostgreSQL Service ---
+  postgres:
+    image: postgres:14-alpine
+    container_name: bench_postgres
+    environment:
+      POSTGRES_DB: benchmark_db # Nama DB yang kita gunakan di script
+      POSTGRES_USER: postgres # User default
+      POSTGRES_PASSWORD: password # Password untuk user 'postgres'
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume untuk menyimpan data agar tidak hilang setelah container di-stop
+      - pg_data:/var/lib/postgresql/data
+
+  # --- MongoDB Service ---
+  mongodb:
+    image: mongo:latest
+    container_name: bench_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  pg_data:
+  mongo_data:
