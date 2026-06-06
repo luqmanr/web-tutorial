@@ -135,5 +135,3 @@ else:
 *   Eksplorasi lebih lanjut dengan CSS selectors.
 
 ---
-
-## Tanya Jawab & Diskusi (± 0 menit - Terintegrasi selama sesi)
