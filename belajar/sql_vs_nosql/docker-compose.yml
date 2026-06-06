@@ -15,6 +15,19 @@ services:
       # Volume untuk menyimpan data agar tidak hilang setelah container di-stop
       - pg_data:/var/lib/postgresql/data
 
+  # --- SQL Server Service ---
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: benchmark_mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong!Password123  # Must meet complexity requirements
+      - MSSQL_PID=Developer                     # Sets the edition (Express, Developer, etc.)
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql  
+
   # --- MongoDB Service ---
   mongodb:
     image: mongo:latest
@@ -27,3 +40,4 @@ services:
 volumes:
   pg_data:
   mongo_data:
+  mssql_data:
