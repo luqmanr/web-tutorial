@@ -31,7 +31,6 @@ def attach_to_existing_chrome(debugger_address=DEBUGGER_ADDRESS):
         print("Make sure Chrome is running with: google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-coretax")
         raise e
 
-
 def is_logged_in(driver):
     try:
         driver.refresh()
