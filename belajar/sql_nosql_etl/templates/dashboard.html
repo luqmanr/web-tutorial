@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Borma Retail{% endblock %}
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary"><i class="bi bi-shop"></i> Total Cabang</h5>
+                <p class="display-6 fw-bold">{{ summary.total_branches }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success"><i class="bi bi-cash-stack"></i> Total Penjualan</h5>
+                <p class="display-6 fw-bold">Rp {{ "{:,.0f}".format(summary.grand_total) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info"><i class="bi bi-receipt"></i> Total Transaksi</h5>
+                <p class="display-6 fw-bold">{{ summary.total_transactions }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-geo-alt"></i> Penjualan per Cabang
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Cabang</th><th class="text-end">Total</th><th class="text-end">Transaksi</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for b in sales_by_branch %}
+                        <tr>
+                            <td>{{ b.branch_name }}</td>
+                            <td class="text-end">Rp {{ "{:,.0f}".format(b.total) }}</td>
+                            <td class="text-end">{{ b.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-credit-card"></i> Metode Pembayaran
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Metode</th><th class="text-end">Total</th><th class="text-end">Transaksi</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in sales_by_payment %}
+                        <tr>
+                            <td>{{ p.payment_method }}</td>
+                            <td class="text-end">Rp {{ "{:,.0f}".format(p.total) }}</td>
+                            <td class="text-end">{{ p.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="text-muted text-center small">Data dari PostgreSQL &middot; reporting tables</p>
+{% endblock %}

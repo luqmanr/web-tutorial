@@ -1,190 +1,100 @@
-# SQL & NoSQL Exercises + ETL + Automation + Visualization
+# SQL & NoSQL + Frontend (PostgreSQL, MongoDB, Streamlit, HTML/Bootstrap)
 
-## Flow
+## Flow Belajar
+
 ```
-Master Database (master.db) — normalized, 10.804 transaksi, 48.700 item
-    |
-    ├── SQL Exercises (01-04): query langsung ke master
-    ├── MongoDB (05): document model via Docker
-    ├── ETL Pipeline (06): master → reporting DB (aggregated, fast)
-    ├── Scheduler (07): auto-jalankan ETL tiap N menit
-    ├── Streamlit Dashboard (08): baca dari reporting DB (cepat!)
-    ├── Export (09): CSV / HTML / embedded HTML dari reporting DB
-    └── Grafana (bonus): konek ke SQLite/PostgreSQL reporting DB
+docker compose up -d          ─→ PostgreSQL (port 5432) + MongoDB (27017)
+    │
+    ├── 00_setup_postgresql.py  ─→ Buat tabel + seed data + reporting tables
+    │
+    ├── 01_setup_mongodb.py     ─→ Copy data ke MongoDB (document model)
+    │
+    ├── 02_frontend_streamlit.py  ─→ Dashboard Streamlit (query PostgreSQL)
+    │
+    └── 03_frontend_html_bootstrap.py  ─→ Web Flask + Bootstrap (query PostgreSQL)
 ```
 
 ## Setup
 
-### Install
-```bash
-# Core (tanpa dependensi eksternal — pake sqlite3 bawaan Python)
-# Sudah bisa jalan: 00_setup, 01-04, 06, 07, 09
+### 1. Jalankan Docker
 
-# Untuk MongoDB & Streamlit (opsional):
-pip install pymongo streamlit pandas
-```
-
-### Generate Data
-```bash
-python 00_setup.py
-python 06_etl_pipeline.py   # Isi reporting DB
-```
-
-### Docker (untuk MongoDB & PostgreSQL)
 ```bash
 docker compose up -d
 ```
 
----
+### 2. Install Dependencies
 
-## Sesi 1 (2026-06-13) — SQL & NoSQL Exercises + ETL Pipeline
-
-| # | File | Durasi | Topik |
-|---|------|--------|-------|
-| 1 | `00_setup.py` | 10m | Generate master DB & reporting DB |
-| 2 | `01_sql_basics.py` | 15m | SELECT, WHERE, LIKE, IN, BETWEEN, ORDER BY, LIMIT |
-| 3 | `02_sql_aggregation.py` | 20m | GROUP BY, SUM, COUNT, AVG, HAVING |
-| 4 | `03_sql_joins.py` | 20m | INNER JOIN, LEFT JOIN, multi-table JOIN |
-| 5 | `04_sql_window.py` | 15m | RANK, OVER, PARTITION BY, running total, LAG |
-| 6 | `05_nosql_mongodb.py` | 20m | Document model, $unwind, aggregation pipeline |
-| 7 | `06_etl_pipeline.py` | 20m | ETL: transform master → reporting (ATTACH) |
-
-**Total: ~120 menit (2 jam)**
-
-### Answer Keys
-Semua jawaban ada di folder `answers/`:
 ```bash
-python answers/01_sql_basics.py
-python answers/02_sql_aggregation.py
-python answers/03_sql_joins.py
-python answers/04_sql_window.py
+pip install psycopg2-binary pandas streamlit flask pymongo
 ```
 
----
+### 3. Setup Database + Seed Data
 
-## Sesi 2 (2026-06-20) — Automation + Visualization + Export
-
-| # | File | Durasi | Topik |
-|---|------|--------|-------|
-| 1 | `07_scheduler.py` | 25m | 3 cara: Python loop, cronjob, systemd service |
-| 2 | `08_streamlit_dashboard.py` | 30m | Dashboard dari reporting DB (tab: cabang, kategori, payment, top produk) |
-| 3 | `09_export_data.py` | 15m | CSV, HTML, embedded HTML |
-| 4 | **Grafana Bonus** | 20m | Setup Grafana + PostgreSQL/SQLite data source |
-
-**Total: ~90 menit**
-
----
-
-## Detail Setiap File
-
-### `00_setup.py`
-Generate master DB dengan 10 cabang, 12 kategori, 118 produk, 1.000 pelanggan, 10.804 transaksi (Jan-Mar 2026).
-
-### Exercises (01-05)
-Setiap file berisi soal dengan comment `-- GANTI query di bawah ini`. Student mengisi SQL, lalu run:
 ```bash
-python 01_sql_basics.py
+python 00_setup_postgresql.py
 ```
 
-### `06_etl_pipeline.py`
-Menggunakan SQLite ATTACH untuk transformasi data master → reporting.
-Agregasi yang dihasilkan: daily sales per branch, per category, monthly summary, payment method, top products.
+Ini akan:
+- Buat 9 tabel master (branches, categories, products, customers, sales_headers, sales_items, suppliers, purchase_orders, inventory)
+- Seed data: 10 cabang, 12 kategori, 118 produk, 1000 pelanggan, ~10.800 transaksi
+- Buat 5 reporting tables (pre-aggregated, siap pakai untuk frontend)
+- Isi reporting data dari master
 
-### `07_scheduler.py`
-Tiga mode:
+### 4. Setup MongoDB (Opsional)
+
 ```bash
-# Loop mode (development) — jalan tiap 15 menit
-python 07_scheduler.py loop
-
-# Once mode (untuk cronjob) — jalan sekali lalu exit
-python 07_scheduler.py once
-
-# Cronjob (production)
-# crontab -e
-0 * * * * cd /path && python 07_scheduler.py once
-
-# systemd service — file .service sudah dijelaskan di docstring
+python 01_setup_mongodb.py
 ```
 
-### `08_streamlit_dashboard.py`
+Copy data dari PostgreSQL ke MongoDB dengan struktur **embedded document** (denormalized). Menunjukkan perbedaan:
+- SQL: JOIN 4-5 tabel untuk 1 laporan
+- NoSQL: 1 dokumen sudah berisi semua data (branch, customer, items dengan nama produk)
+
+## Frontend
+
+### Streamlit Dashboard
+
 ```bash
-streamlit run 08_streamlit_dashboard.py
+streamlit run 02_frontend_streamlit.py
 ```
-Dashboard membaca dari **reporting DB** (bukan master), jadi query-nya cepat.
-Ada 4 tab: penjualan per cabang, per kategori, metode pembayaran, top produk.
 
-### `09_export_data.py`
+4 tab: per Cabang, per Kategori, Metode Pembayaran, Top Produk.
+Membaca dari reporting tables PostgreSQL (cepat, tanpa JOIN).
+
+### HTML + Bootstrap (Flask)
+
 ```bash
-# Export semua tabel ke semua format
-python 09_export_data.py
-
-# Export spesifik
-python 09_export_data.py csv daily_sales_by_branch
-python 09_export_data.py html monthly_sales_summary
-python 09_export_data.py embedded top_products
+python 03_frontend_html_bootstrap.py
+# Buka: http://localhost:5000
 ```
 
----
+4 halaman dengan Bootstrap 5:
+- `/` — Dashboard ringkasan (total cabang, penjualan, transaksi)
+- `/branches` — Penjualan per cabang (filter tanggal)
+- `/products` — Top 10 produk + penjualan per kategori
+- `/sales` — 100 transaksi terbaru
 
-## Kenapa Reporting DB Terpisah?
+## Arsitektur
 
 ```
-            MASTER DB (normalized)             REPORTING DB (aggregated)
-            ┌─────────────────┐               ┌──────────────────────┐
-            │ sales_headers   │               │ daily_sales_by_       │
-            │ sales_items     │──ETL──►        │   branch             │
-            │ products        │   cron         │ daily_sales_by_      │
-            │ branches        │               │   category           │
-            │ customers       │               │ monthly_summary      │
-            └─────────────────┘               │ top_products         │
-                    │                         └──────────────────────┘
-                    │                                 │
-                    ▼                                 ▼
-              Query lambat                     Query super cepat
-              (JOIN 5 tabel)                   (1 tabel, pre-aggregated)
+PostgreSQL (normalized)
+    │
+    ├── Master tables (9 tabel, banyak JOIN)
+    │
+    └── Reporting tables (pre-aggregated)
+            │
+            ├── Streamlit Dashboard (Python)
+            └── Flask + Bootstrap 5 (Browser)
+
+MongoDB (denormalized, embedded documents)
+    └── 1 collection `sales` sudah包含 semua data
 ```
 
-- **Master DB**: query lambat karena perlu JOIN & aggregate di runtime
-- **Reporting DB**: data sudah siap pakai, tinggal SELECT — cocok untuk dashboard
-- **ETL cronjob**: update reporting DB periodik (tiap 15 menit / 1 jam)
-- **Setiap student manage reporting DB sendiri**
+## File Reference (lama)
 
-## Dataset
-
-### Master DB Tables
-| Table | Rows | Deskripsi |
-|-------|------|-----------|
-| branches | 10 | Cabang Borma se-Jawa Barat & Banten |
-| categories | 12 | Makanan Ringan, Minuman, Susu, dll |
-| products | 118 | Produk dengan SKU, harga modal & jual |
-| customers | 1.000 | Pelanggan dengan member ID |
-| sales_headers | 10.804 | Transaksi Jan-Mar 2026 |
-| sales_items | 48.700 | Item per transaksi |
-| suppliers | 20 | Supplier dengan terms pembayaran |
-| purchase_orders | 500 | PO ke supplier |
-| inventory | 816 | Stok per cabang per produk |
-
-### Reporting DB Tables
-| Table | Rows | Deskripsi |
-|-------|------|-----------|
-| daily_sales_by_branch | 900 | Penjualan harian per cabang |
-| daily_sales_by_category | 1.080 | Penjualan harian per kategori |
-| monthly_sales_summary | 30 | Ringkasan bulanan per cabang |
-| payment_method_summary | 450 | Penjualan per metode bayar per hari |
-| top_products | 354 | Peringkat produk terlaris per bulan |
-
-## Grafana (Bonus)
-
-### Option A: Grafana + SQLite (via sqlite3datasource)
-```bash
-docker run -d -p 3000:3000 --name=grafana grafana/grafana
-# Install plugin: grafana-sqlite3-datasource
-# Add data source → SQLite → path ke reporting.db
-```
-
-### Option B: Grafana + PostgreSQL
-```bash
-# Di docker-compose.yml sudah ada service postgres
-python migrate_to_pg.py  # (akan dibuat terpisah)
-# Add data source → PostgreSQL → host: localhost, db: reporting_db
-```
+File-file berikut masih ada tapi tidak dipakai di flow utama:
+- `01-04_sql_*.py` — Latihan SQL dasar (jawaban di `answers/`)
+- `06_etl_pipeline.py` — ETL SQLite (ATTACH)
+- `07_scheduler.py` — Cronjob scheduler
+- `08_streamlit_dashboard.py` — Streamlit versi SQLite
+- `09_export_data.py` — Export CSV/HTML
