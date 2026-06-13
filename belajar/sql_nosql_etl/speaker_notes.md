@@ -2,13 +2,13 @@
 
 ## Ringkasan Sesi
 
-**Tujuan**: Peserta bisa setup PostgreSQL + MongoDB, seed data, dan menampilkan data di web browser via Streamlit maupun HTML/Bootstrap.
+**Tujuan**: Peserta bisa setup MSSQL + MongoDB, seed data, export ke SQLite intermediary, dan menampilkan data di web browser via Streamlit maupun HTML/Bootstrap.
 
 **Durasi**: ~120 menit (1 sesi penuh atau 2x60 menit)
 
 **Flow**:
 ```
-Docker → PostgreSQL → Seed Data → MongoDB → Streamlit → Flask + Bootstrap
+Docker → MSSQL → Seed Data → export SQLite → MongoDB → Streamlit → Flask + Bootstrap
 ```
 
 ---
@@ -22,10 +22,10 @@ docker compose up -d
 ```
 
 **Jelaskan ke peserta:**
-- `docker-compose.yml` mendefinisikan 2 service: `postgres` dan `mongodb`
-- PostgreSQL di port 5432, MongoDB di port 27017
+- `docker-compose.yml` mendefinisikan 3 service: `mssql`, `mongodb`, `postgres`
+- MSSQL di port 1433 (user: `sa` / `YourStrong!Password123`), MongoDB di port 27017
+- PostgreSQL (port 5432) sebagai alternatif — tidak dipakai di flow utama
 - Volume data tetap ada meskipun container di-restart
-- Kredensial: `report_user` / `report_pass`, database: `reporting_db`
 
 **Cek apakah container sudah jalan:**
 ```bash
@@ -35,79 +35,115 @@ docker compose logs mongodb
 ```
 
 **Troubleshooting umum:**
-- Port 5432/27017 sudah dipakai → ganti port di `docker-compose.yml`
+- Port 1433/27017 sudah dipakai → ganti port di `docker-compose.yml`
 - Docker daemon belum jalan → `sudo systemctl start docker`
-- Peserta di Windows → pastikan Docker Desktop sudah running
+- MSSQL butuh ~10-15 detik untuk pertama kali start (initialization)
+- Cek log: `docker compose logs mssql`
+- ODBC Driver 18 belum terinstall → `pip install pyodbc` saja tidak cukup, perlu driver dari Microsoft
+- Di Ubuntu: `curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list && sudo apt update && sudo ACCEPT_EULA=Y apt install -y msodbcsql18`
 
 ---
 
-## Bagian 2: Setup PostgreSQL — 00_setup_postgresql.py (20 menit)
+## Bagian 2: Setup MSSQL + Export SQLite — 00_setup_mssql.py (25 menit)
 
 ### Jalankan:
 ```bash
-python 00_setup_postgresql.py
+python 00_setup_mssql.py
 ```
 
 ### Yang terjadi di belakang layar:
 
-**Step 1 — Koneksi:**
+**Step 1 — Koneksi MSSQL:**
 ```python
-psycopg2.connect(host='localhost', port=5432, dbname='reporting_db', ...)
+pyodbc.connect(
+    "DRIVER={ODBC Driver 18 for SQL Server};"
+    "SERVER=localhost;DATABASE=retail_db;"
+    "UID=sa;PWD=YourStrong!Password123;"
+    "TrustServerCertificate=yes;"
+)
 ```
-- Perhatikan: library `psycopg2` adalah PostgreSQL adapter untuk Python
-- Parameter connection = host, port, dbname, user, password
-- Beda dengan SQLite yang cuma perlu path file
+- Library `pyodbc` = ODBC bridge untuk Python
+- Butuh ODBC Driver 18 from Microsoft (install terpisah)
+- `TrustServerCertificate=yes` karena pakai self-signed cert (localhost)
+- Bandingkan dengan SQLite (tanpa server, tanpa auth)
 
-**Step 2 — Create Tables:**
-- 9 tabel master: `branches, categories, products, customers, sales_headers, sales_items, suppliers, purchase_orders, inventory`
-- 5 reporting tables: `daily_sales_by_branch, daily_sales_by_category, monthly_sales_summary, payment_method_summary, top_products`
-- Tabel master = normalized (data dipecah kecil-kecil, perlu JOIN)
-- Reporting tables = denormalized / pre-aggregated (data sudah siap pakai)
-
-**Kenapa reporting tables terpisah?**
+**Step 2 — Create Database:**
+```python
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'retail_db')
+    CREATE DATABASE [retail_db]
 ```
-Query ke master: butuh JOIN 4-5 tabel → lambat untuk dashboard
-Query ke reporting: SELECT langsung dari 1 tabel → cepat
-Ini pola umum di BI / data warehouse: ETL dari OLTP ke OLAP
+- MSSQL require explicit database creation (beda dengan PostgreSQL `CREATE DATABASE` atau SQLite yang auto-create file)
+- `sys.databases` = system catalog view
+
+**Step 3 — Create Tables:**
+- 9 tabel master + 5 reporting tables
+- Perbedaan tipe data dengan SQL lain:
+  - `INT IDENTITY(1,1)` = auto-increment (seperti `SERIAL` di PG)
+  - `VARCHAR(n)` = string dengan panjang tetap
+  - `DATE` = tanggal
+  - `FLOAT` = desimal
+
+**Step 4 — Seed Data:**
+- Data dummy: 10 cabang Borma, 12 kategori, 118 produk, 1000 pelanggan
+- ~10.800 transaksi (Jan-Mar 2026), ~48.700 item
+- `random.seed(42)` → hasil konsisten
+
+**Step 5 — Reporting Tables (di MSSQL):**
+- `FORMAT(tanggal, 'yyyy-MM')` = MSSQL version of `TO_CHAR` / `strftime`
+- `RANK() OVER (PARTITION BY ...)` = window function (sama di semua SQL)
+- `CAST(si.subtotal AS FLOAT)` = explicit type cast
+
+**Step 6 — Export ke SQLite Intermediary:**
+```python
+# Baca dari MSSQL → tulis ke SQLite
+cur.execute('SELECT * FROM branches')
+rows = cur.fetchall()
+# Buat table di SQLite + insert
 ```
-
-**Step 3 — Seed Data:**
-- Data dummy: 10 cabang Borma (Jawa Barat + Banten), 12 kategori, 118 produk
-- ~10.800 transaksi selama Jan-Mar 2026
-- ~48.700 item transaksi
-- random.seed(42) → hasilnya konsisten setiap run
-
-**Step 4 — Reporting Tables:**
-- `daily_sales_by_branch`: total penjualan per cabang per hari
-- `daily_sales_by_category`: total penjualan per kategori per hari
-- `monthly_sales_summary`: ringkasan bulanan per cabang
-- `payment_method_summary`: breakdown metode bayar per hari
-- `top_products`: peringkat produk terlaris per bulan (pakai RANK() window function)
+- Kenapa SQLite? Frontend (Streamlit/Flask) baca dari SQLite
+- SQLite lebih ringan, tanpa koneksi jaringan, cocok untuk read-only dashboard
+- Ini pola ETL sederhana: source (MSSQL) → intermediary (SQLite) → frontend
 
 ### Slide/Visual:
 ```
-┌──────────────────────────────────────────────┐
-│  PostgreSQL (reporting_db)                    │
-│                                              │
-│  Master Tables (normalized)                  │
-│  ┌────────┐ ┌──────────┐ ┌──────────┐       │
-│  │branches│ │products  │ │sales_hdr │       │
-│  │ 10 rows│ │ 118 rows │ │ 10.8k    │       │
-│  └────────┘ └──────────┘ └──────────┘       │
-│                                              │
-│  Reporting Tables (pre-aggregated)           │
-│  ┌──────────────────┐ ┌──────────────────┐  │
-│  │daily_by_branch   │ │monthly_summary   │  │
-│  │daily_by_category │ │payment_method    │  │
-│  │top_products      │ │                  │  │
-│  └──────────────────┘ └──────────────────┘  │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  Arsitektur Data Flow                            │
+│                                                  │
+│  MSSQL (master data)                             │
+│  ┌─────────────────────────────────────┐         │
+│  │ 9 master tables (normalized)        │         │
+│  │ 5 reporting tables (aggregated)     │         │
+│  └──────────┬──────────────────────────┘         │
+│             │ export                             │
+│             ▼                                    │
+│  SQLite (data/data_retail.db)                    │
+│  ┌─────────────────────────────────────┐         │
+│  │ reporting tables (read-only)        │         │
+│  │ ← untuk Streamlit & Flask           │         │
+│  └─────────────────────────────────────┘         │
+│                                                  │
+│  MongoDB (document model)                        │
+│  ┌─────────────────────────────────────┐         │
+│  │ embedded documents (denormalized)   │         │
+│  │ ← untuk demo NoSQL                  │         │
+│  └─────────────────────────────────────┘         │
+└──────────────────────────────────────────────────┘
 ```
 
+### Perbandingan: MSSQL vs PostgreSQL vs SQLite
+
+| Aspek | MSSQL | PostgreSQL | SQLite |
+|-------|-------|------------|--------|
+| Setup | Server + ODBC driver | Server + psycopg2 | File saja |
+| Port | 1433 | 5432 | — |
+| Auto-increment | `IDENTITY(1,1)` | `SERIAL` | `INTEGER PRIMARY KEY` |
+| Format date | `FORMAT(d, 'yyyy-MM')` | `TO_CHAR(d, 'YYYY-MM')` | `strftime('%Y-%m', d)` |
+| Use case | Production OLTP | Production OLTP | Embedded / mobile |
+
 ### Pertanyaan untuk peserta:
-1. "Apa bedanya PRIMARY KEY di SQLite vs PostgreSQL?" (SERIAL vs INTEGER)
-2. "Kenapa reporting tables perlu dibuat terpisah?" (performance, no JOIN)
-3. "Kalau ada transaksi baru, gimana cara update reporting tables?" (re-run populate_reporting)
+1. "Kenapa kita pakai SQLite sebagai intermediary?" (ringan, tanpa server, cocok untuk read-only dashboard)
+2. "Apa bedanya IDENTITY di MSSQL dengan SERIAL di PostgreSQL?" (IDENTITY = auto-increment pada column, SERIAL = shortcut untuk sequence)
+3. "Kalau ada transaksi baru di MSSQL, gimana caranya update SQLite?" (re-run export_to_sqlite / setup cronjob)
 
 ---
 
@@ -118,6 +154,8 @@ Ini pola umum di BI / data warehouse: ETL dari OLTP ke OLAP
 python 01_setup_mongodb.py
 ```
 
+Membaca data dari **MSSQL**, lalu membangun enriched documents di MongoDB.
+
 ### Konsep Kunci:
 
 **SQL vs NoSQL — Struktur Data:**
@@ -126,7 +164,7 @@ python 01_setup_mongodb.py
 
 **Contoh perbandingan:**
 
-SQL (butuh JOIN):
+SQL di MSSQL (butuh JOIN):
 ```sql
 SELECT b.name, c.name, p.name, si.quantity
 FROM sales_headers sh
@@ -178,11 +216,11 @@ streamlit run 02_frontend_streamlit.py
 
 ### Yang Didemonstrasikan:
 
-**1. Koneksi ke PostgreSQL dari Streamlit:**
+**1. Koneksi ke SQLite dari Streamlit:**
 ```python
 @st.cache_data(ttl=60)
 def load_data(query):
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = sqlite3.connect('data/data_retail.db')
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
@@ -190,7 +228,8 @@ def load_data(query):
 
 - `@st.cache_data(ttl=60)`: cache query selama 60 detik
 - Kenapa? Karena reporting tables jarang berubah, tidak perlu query setiap re-render
-- Ini best practice Streamlit: cache semuanya
+- **Tidak perlu koneksi jaringan** — SQLite adalah file lokal, jadi ekstrem cepat
+- Bandingkan dengan MSSQL yang perlu TCP/IP + auth setiap query
 
 **2. 4 Tab Dashboard:**
 - **Penjualan per Cabang**: filter tanggal, tabel + bar chart
@@ -246,7 +285,17 @@ templates/
 
 ### Konsep yang diajarkan:
 
-**1. Flask Route:**
+**1. Koneksi ke SQLite dari Flask:**
+```python
+def query(sql, params=None):
+    conn = sqlite3.connect('data/data_retail.db')
+    conn.row_factory = sqlite3.Row
+    ...
+```
+- `sqlite3.Row` → akses kolom seperti dictionary (`row['branch_name']`)
+- Parameter binding pakai `?` (placeholder SQLite), bukan `%s` (PostgreSQL) atau `?` (MSSQL via pyodbc)
+
+**2. Flask Route:**
 ```python
 @app.route('/')
 def dashboard():
@@ -301,16 +350,19 @@ def dashboard():
 
 ## Bonus: Eksplorasi Database Langsung (15 menit)
 
-### psql (PostgreSQL CLI):
+### sqlcmd (MSSQL CLI):
 ```bash
-docker exec -it nosql_pg psql -U report_user -d reporting_db
+docker exec -it mssql_retail /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P 'YourStrong!Password123' -C
 
-# Di dalam psql:
-\d                    # daftar semua tables
-\d daily_sales_by_branch  # lihat struktur table
+# Di dalam sqlcmd:
+SELECT name FROM sys.databases;
+USE retail_db;
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES;
 SELECT * FROM branches;
-SELECT branch_name, total_sales FROM daily_sales_by_branch LIMIT 10;
-\q
+SELECT branch_name, total_sales FROM daily_sales_by_branch;
+GO
+exit
 ```
 
 ### MongoDB Compass / mongosh:
@@ -333,12 +385,13 @@ exit
 ## Ringkasan Akhir
 
 ### Yang sudah dipelajari:
-1. **Infrastruktur**: Docker, PostgreSQL, MongoDB
+1. **Infrastruktur**: Docker, MSSQL, MongoDB
 2. **Database Design**: Normalized vs Denormalized, OLTP vs OLAP
-3. **SQL**: CREATE TABLE, INSERT, SELECT, JOIN, GROUP BY, RANK()
-4. **NoSQL**: Document model, embedded documents, aggregation pipeline
-5. **Frontend**: Streamlit dashboard, Flask + Bootstrap web app
-6. **Pola**: Cache query, pre-aggregated reporting tables, server-side rendering
+3. **SQL**: CREATE TABLE, INSERT, SELECT, JOIN, GROUP BY, RANK() — di MSSQL
+4. **ETL Pattern**: MSSQL → SQLite intermediary → Frontend
+5. **NoSQL**: Document model, embedded documents, aggregation pipeline — di MongoDB
+6. **Frontend**: Streamlit dashboard, Flask + Bootstrap web app
+7. **Pola**: Cache query, pre-aggregated reporting tables, server-side rendering
 
 ### Latihan untuk peserta (kalau ada waktu):
 1. Tambah halaman `/customers` di Flask app yang menampilkan 100 pelanggan terbaru
@@ -347,7 +400,8 @@ exit
 4. Buat materialized view di PostgreSQL: `CREATE MATERIALIZED VIEW ...`
 
 ### Referensi:
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [MSSQL ODBC Driver](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server)
+- [pyodbc Documentation](https://github.com/mkleehammer/pyodbc)
 - [MongoDB Manual](https://www.mongodb.com/docs/manual/)
 - [Streamlit Docs](https://docs.streamlit.io/)
 - [Flask Tutorial](https://flask.palletsprojects.com/)

@@ -1,0 +1,7 @@
+MSSQL_CONFIG = {
+    "server": "localhost",
+    "database": "dbname",
+    "username": "usrname",
+    "password": "AVERYsecurePASSWORD123!",
+    "driver": "{ODBC Driver 18 for SQL Server}",
+}

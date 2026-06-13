@@ -1,24 +1,37 @@
 services:
-  mongodb:
-    image: mongo:7
-    container_name: nosql_mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
   postgres:
-    image: postgres:16-alpine
-    container_name: nosql_pg
+    image: postgres:14-alpine
+    container_name: pg_retail
     environment:
-      POSTGRES_DB: reporting_db
-      POSTGRES_USER: report_user
-      POSTGRES_PASSWORD: report_pass
+      POSTGRES_DB: retail_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_retail
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong!Password123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  mongodb:
+    image: mongo:7
+    container_name: mongo_retail
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
 volumes:
-  mongo_data:
   pg_data:
+  mongo_data:
+  mssql_data:

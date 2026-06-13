@@ -1,26 +1,38 @@
-import psycopg2
+import pyodbc
 import pandas as pd
 from pymongo import MongoClient
 
 DB_CONFIG = dict(
-    host='localhost', port=5432,
-    dbname='reporting_db', user='report_user', password='report_pass',
+    server='localhost',
+    database='retail_db',
+    username='sa',
+    password='YourStrong!Password123',
+    driver='{ODBC Driver 18 for SQL Server}',
+)
+
+CONN_STR = (
+    f"DRIVER={DB_CONFIG['driver']};"
+    f"SERVER={DB_CONFIG['server']};"
+    f"DATABASE={DB_CONFIG['database']};"
+    f"UID={DB_CONFIG['username']};"
+    f"PWD={DB_CONFIG['password']};"
+    "TrustServerCertificate=yes;"
 )
 
 print('=' * 60)
-print('PERSIAPAN: Copy data dari PostgreSQL ke MongoDB')
+print('PERSIAPAN: Copy data dari MSSQL ke MongoDB')
 print('Jalankan container: docker compose up -d')
 print('=' * 60)
 
-pg_conn = psycopg2.connect(**DB_CONFIG)
+sql_conn = pyodbc.connect(CONN_STR)
 mongo_client = MongoClient('mongodb://localhost:27017/')
 mongo_db = mongo_client['retail_db']
 
-branches = pd.read_sql_query('SELECT * FROM branches ORDER BY id', pg_conn)
-categories = pd.read_sql_query('SELECT * FROM categories ORDER BY id', pg_conn)
-products = pd.read_sql_query('SELECT * FROM products ORDER BY id', pg_conn)
-customers = pd.read_sql_query('SELECT * FROM customers ORDER BY id', pg_conn)
-suppliers = pd.read_sql_query('SELECT * FROM suppliers ORDER BY id', pg_conn)
+branches = pd.read_sql_query('SELECT * FROM branches ORDER BY id', sql_conn)
+categories = pd.read_sql_query('SELECT * FROM categories ORDER BY id', sql_conn)
+products = pd.read_sql_query('SELECT * FROM products ORDER BY id', sql_conn)
+customers = pd.read_sql_query('SELECT * FROM customers ORDER BY id', sql_conn)
+suppliers = pd.read_sql_query('SELECT * FROM suppliers ORDER BY id', sql_conn)
 
 print(f'Import {len(branches)} branches...')
 mongo_db.branches.delete_many({})
@@ -46,11 +58,11 @@ mongo_db.suppliers.delete_many({})
 mongo_db.suppliers.insert_many(suppliers.to_dict('records'))
 
 sales_headers = pd.read_sql_query(
-    'SELECT * FROM sales_headers ORDER BY id LIMIT 2000', pg_conn
-)
+    'SELECT * FROM sales_headers ORDER BY id', sql_conn
+).head(2000)
 sales_ids = tuple(sales_headers['id'].tolist())
 sales_items = pd.read_sql_query(
-    f'SELECT * FROM sales_items WHERE sale_id IN {sales_ids} ORDER BY id', pg_conn
+    f'SELECT * FROM sales_items WHERE sale_id IN {sales_ids} ORDER BY id', sql_conn
 )
 
 print(f'Build {len(sales_headers)} enriched sales documents...')
@@ -92,7 +104,7 @@ for _, sh in sales_headers.iterrows():
 
 mongo_db.sales.delete_many({})
 mongo_db.sales.insert_many(sales_docs)
-pg_conn.close()
+sql_conn.close()
 
 print(f'Imported {len(sales_docs)} enriched sales documents.\n')
 
@@ -135,4 +147,4 @@ sample = mongo_db.sales.find_one({}, {'_id': 0})
 print(json.dumps(sample, indent=2, default=str)[:1500])
 
 mongo_client.close()
-print('\nSelesai! Lihat dokumentasi MongoDB Compass untuk eksplorasi visual.')
+print('\nSelesai!')

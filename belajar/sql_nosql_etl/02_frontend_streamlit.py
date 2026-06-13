@@ -1,16 +1,15 @@
-import psycopg2
+import sqlite3
+import os
 import pandas as pd
 import streamlit as st
 
-DB_CONFIG = dict(
-    host='localhost', port=5432,
-    dbname='reporting_db', user='report_user', password='report_pass',
-)
+BASE = os.path.dirname(os.path.abspath(__file__))
+SQLITE_PATH = os.path.join(BASE, 'data', 'data_retail.db')
 
 
 @st.cache_data(ttl=60)
 def load_data(query):
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = sqlite3.connect(SQLITE_PATH)
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
@@ -18,13 +17,10 @@ def load_data(query):
 
 st.set_page_config(page_title='Borma Sales Dashboard', layout='wide')
 st.title('Borma Retail Dashboard')
-st.markdown('Data dari **PostgreSQL** (reporting tables)')
+st.markdown('Data dari **SQLite intermediary** (data_retail.db) — hasil export dari PostgreSQL')
 
-try:
-    conn = psycopg2.connect(**DB_CONFIG)
-    conn.close()
-except Exception:
-    st.error('Tidak bisa konek ke PostgreSQL. Jalankan: `docker compose up -d` lalu `python 00_setup_postgresql.py`')
+if not os.path.exists(SQLITE_PATH):
+    st.error(f'File {SQLITE_PATH} tidak ditemukan. Jalankan dulu: `python 00_setup_postgresql.py`')
     st.stop()
 
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -49,7 +45,7 @@ with tab1:
         with col2:
             st.bar_chart(df_branch.set_index('branch_name')['total_sales'])
     else:
-        st.warning('Jalankan dulu: python 00_setup_postgresql.py')
+        st.warning('Reporting tables kosong. Jalankan dulu: python 00_setup_postgresql.py')
 
 with tab2:
     st.subheader('Penjualan per Kategori')
@@ -66,7 +62,7 @@ with tab2:
         with col2:
             st.bar_chart(df_cat.set_index('category_name')['total'])
     else:
-        st.warning('Jalankan dulu: python 00_setup_postgresql.py')
+        st.warning('Reporting tables kosong. Jalankan dulu: python 00_setup_postgresql.py')
 
 with tab3:
     st.subheader('Metode Pembayaran')
@@ -83,7 +79,7 @@ with tab3:
         with col2:
             st.bar_chart(df_pay.set_index('payment_method')['total'])
     else:
-        st.warning('Jalankan dulu: python 00_setup_postgresql.py')
+        st.warning('Reporting tables kosong. Jalankan dulu: python 00_setup_postgresql.py')
 
 with tab4:
     st.subheader('Top 10 Produk per Bulan')
@@ -96,7 +92,7 @@ with tab4:
     if not df_top.empty:
         st.dataframe(df_top, use_container_width=True, hide_index=True)
     else:
-        st.warning('Jalankan dulu: python 00_setup_postgresql.py')
+        st.warning('Reporting tables kosong. Jalankan dulu: python 00_setup_postgresql.py')
 
 st.divider()
-st.caption('Data source: PostgreSQL | Auto-refresh tiap 60 detik')
+st.caption(f'Source: {SQLITE_PATH} | Auto-refresh tiap 60 detik')

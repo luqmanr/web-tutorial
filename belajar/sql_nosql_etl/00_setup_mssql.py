@@ -1,17 +1,28 @@
-import psycopg2
-import psycopg2.extras
+import pyodbc
 import sqlite3
 import random
 import os
 from datetime import datetime, timedelta
 
+"""
+TODO: use mssql-python instead of pyodbc for better performance and native support
+"""
+
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE, 'data')
 random.seed(42)
 
-DB_CONFIG = dict(
-    host='localhost', port=5432,
-    database='retail_db', user='postgres', password='password',
+import config
+MSSQL_CONFIG = config.MSSQL_CONFIG
+
+CONN_STR = (
+    f"DRIVER={MSSQL_CONFIG['driver']};"
+    f"SERVER={MSSQL_CONFIG['server']};"
+    f"DATABASE={MSSQL_CONFIG['database']};"
+    f"UID={MSSQL_CONFIG['username']};"
+    f"PWD={MSSQL_CONFIG['password']};"
+    "TrustServerCertificate=yes;"
 )
 
 BRANCHES = [
@@ -101,67 +112,131 @@ SUPPLIERS_INFO = [
 ]
 
 
-def get_conn():
-    return psycopg2.connect(**DB_CONFIG)
-
-
-def create_tables(conn):
+def ensure_database():
+    conn = pyodbc.connect(
+        f"DRIVER={MSSQL_CONFIG['driver']};"
+        f"SERVER={MSSQL_CONFIG['server']};"
+        f"UID={MSSQL_CONFIG['username']};"
+        f"PWD={MSSQL_CONFIG['password']};"
+        "TrustServerCertificate=yes;"
+    )
+    conn.autocommit = True
     cur = conn.cursor()
+    cur.execute(f"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '{MSSQL_CONFIG['database']}') CREATE DATABASE [{MSSQL_CONFIG['database']}]")
+    cur.close()
+    conn.close()
+
+
+def create_tables(cur):
     cur.execute('''
-        CREATE TABLE IF NOT EXISTS branches (
-            id INTEGER PRIMARY KEY, name TEXT NOT NULL,
-            city TEXT NOT NULL, region TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS categories (
-            id INTEGER PRIMARY KEY, name TEXT NOT NULL, parent_id INTEGER
-        );
-        CREATE TABLE IF NOT EXISTS products (
-            id SERIAL PRIMARY KEY, sku TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
-            category_id INTEGER NOT NULL, unit TEXT DEFAULT 'pcs',
-            supplier_price INTEGER NOT NULL, retail_price INTEGER NOT NULL,
-            supplier_id INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS customers (
-            id INTEGER PRIMARY KEY, name TEXT NOT NULL, member_id TEXT UNIQUE,
-            phone TEXT, city TEXT, join_date DATE NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS suppliers (
-            id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT,
-            contact TEXT, payment_terms TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS sales_headers (
-            id INTEGER PRIMARY KEY, branch_id INTEGER NOT NULL, customer_id INTEGER,
-            transaction_date DATE NOT NULL, payment_method TEXT NOT NULL,
-            total_amount INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS sales_items (
-            id INTEGER PRIMARY KEY, sale_id INTEGER NOT NULL,
-            product_id INTEGER NOT NULL, quantity INTEGER NOT NULL,
-            unit_price INTEGER NOT NULL, subtotal INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS purchase_orders (
-            id INTEGER PRIMARY KEY, supplier_id INTEGER NOT NULL, branch_id INTEGER NOT NULL,
-            order_date DATE NOT NULL, status TEXT NOT NULL, total_amount INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS inventory (
-            id INTEGER PRIMARY KEY, branch_id INTEGER NOT NULL, product_id INTEGER NOT NULL,
-            stock_qty INTEGER NOT NULL, last_updated DATE NOT NULL
-        );
+        CREATE TABLE branches (
+            id INT PRIMARY KEY, name VARCHAR(100) NOT NULL,
+            city VARCHAR(50) NOT NULL, region VARCHAR(50) NOT NULL
+        )
     ''')
-    conn.commit()
+    cur.execute('''
+        CREATE TABLE categories (
+            id INT PRIMARY KEY, name VARCHAR(100) NOT NULL, parent_id INT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE products (
+            id INT IDENTITY(1,1) PRIMARY KEY, sku VARCHAR(20) UNIQUE NOT NULL,
+            name VARCHAR(200) NOT NULL, category_id INT NOT NULL,
+            unit VARCHAR(20) DEFAULT 'pcs',
+            supplier_price INT NOT NULL, retail_price INT NOT NULL,
+            supplier_id INT NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE customers (
+            id INT PRIMARY KEY, name VARCHAR(100) NOT NULL,
+            member_id VARCHAR(20) UNIQUE, phone VARCHAR(20),
+            city VARCHAR(50), join_date DATE NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE suppliers (
+            id INT PRIMARY KEY, name VARCHAR(200) NOT NULL, city VARCHAR(50),
+            contact VARCHAR(100), payment_terms VARCHAR(50) NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE sales_headers (
+            id INT PRIMARY KEY, branch_id INT NOT NULL, customer_id INT,
+            transaction_date DATE NOT NULL, payment_method VARCHAR(20) NOT NULL,
+            total_amount INT NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE sales_items (
+            id INT PRIMARY KEY, sale_id INT NOT NULL,
+            product_id INT NOT NULL, quantity INT NOT NULL,
+            unit_price INT NOT NULL, subtotal INT NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE purchase_orders (
+            id INT PRIMARY KEY, supplier_id INT NOT NULL, branch_id INT NOT NULL,
+            order_date DATE NOT NULL, status VARCHAR(20) NOT NULL,
+            total_amount INT NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE inventory (
+            id INT PRIMARY KEY, branch_id INT NOT NULL, product_id INT NOT NULL,
+            stock_qty INT NOT NULL, last_updated DATE NOT NULL
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE daily_sales_by_branch (
+            date DATE NOT NULL, branch_id INT NOT NULL,
+            branch_name VARCHAR(100) NOT NULL, total_sales INT NOT NULL,
+            transaction_count INT NOT NULL,
+            PRIMARY KEY (date, branch_id)
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE daily_sales_by_category (
+            date DATE NOT NULL, category_id INT NOT NULL,
+            category_name VARCHAR(100) NOT NULL, total_sales INT NOT NULL,
+            qty_sold INT NOT NULL,
+            PRIMARY KEY (date, category_id)
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE monthly_sales_summary (
+            year_month VARCHAR(7) NOT NULL, branch_id INT NOT NULL,
+            branch_name VARCHAR(100) NOT NULL, total_sales INT NOT NULL,
+            total_qty INT NOT NULL, avg_transaction FLOAT NOT NULL,
+            PRIMARY KEY (year_month, branch_id)
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE payment_method_summary (
+            date DATE NOT NULL, payment_method VARCHAR(20) NOT NULL,
+            total_amount INT NOT NULL, transaction_count INT NOT NULL,
+            PRIMARY KEY (date, payment_method)
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE top_products (
+            month VARCHAR(7) NOT NULL, product_id INT NOT NULL,
+            product_name VARCHAR(200) NOT NULL, category_name VARCHAR(100) NOT NULL,
+            qty_sold INT NOT NULL, total_revenue INT NOT NULL,
+            rank INT NOT NULL,
+            PRIMARY KEY (month, product_id)
+        )
+    ''')
 
 
-def seed_master_data(conn):
-    cur = conn.cursor()
-
-    cur.execute('TRUNCATE branches, categories, products, customers, suppliers, sales_headers, sales_items, purchase_orders, inventory RESTART IDENTITY CASCADE')
-
+def seed_data(cur):
     for b in BRANCHES:
-        cur.execute('INSERT INTO branches VALUES (%s,%s,%s,%s)', b)
+        cur.execute('INSERT INTO branches VALUES (?,?,?,?)', b)
     print(f'  branches: {len(BRANCHES)}')
 
     for c in CATEGORIES:
-        cur.execute('INSERT INTO categories VALUES (%s,%s,%s)', c)
+        cur.execute('INSERT INTO categories VALUES (?,?,?)', c)
     print(f'  categories: {len(CATEGORIES)}')
 
     products_data = []
@@ -175,39 +250,38 @@ def seed_master_data(conn):
             products_data.append((sku_counter, name, cat_id, 'pcs', supplier_price, retail_price, supplier_id))
             sku_counter += 1
     for p in products_data:
-        cur.execute('INSERT INTO products (sku, name, category_id, unit, supplier_price, retail_price, supplier_id) VALUES (%s,%s,%s,%s,%s,%s,%s)', p)
+        cur.execute('INSERT INTO products (sku, name, category_id, unit, supplier_price, retail_price, supplier_id) VALUES (?,?,?,?,?,?,?)', p)
     print(f'  products: {len(products_data)}')
 
     first_names = ['Ahmad', 'Budi', 'Citra', 'Dedi', 'Eka', 'Fitri', 'Gilang', 'Hana', 'Irfan', 'Juni',
                    'Kartika', 'Lilis', 'Maman', 'Nina', 'Oman', 'Putri', 'Qori', 'Rudi', 'Sari', 'Tono',
                    'Ujang', 'Vina', 'Wawan', 'Yanti', 'Zaki']
-    customers_data = []
     for i in range(1, 1001):
         name = f'{random.choice(first_names)} {random.choice(["S.", "P.", "A.", "Setiawan", "Suryana", "Hidayat", "Wijaya", "Kusuma", "Pratama", "Nugraha"])}'
         member_id = f'MEM-{i:05d}'
         phone = f'08{random.randint(100000000, 999999999)}'
         city = random.choice(CITIES)
         join_date = f'2025-{random.randint(1,12):02d}-{random.randint(1,28):02d}'
-        customers_data.append((i, name, member_id, phone, city, join_date))
-    for c in customers_data:
-        cur.execute('INSERT INTO customers VALUES (%s,%s,%s,%s,%s,%s)', c)
-    print(f'  customers: {len(customers_data)}')
+        cur.execute('INSERT INTO customers VALUES (?,?,?,?,?,?)', (i, name, member_id, phone, city, join_date))
+    print(f'  customers: 1000')
 
     for i, s in enumerate(SUPPLIERS_INFO, 1):
-        cur.execute('INSERT INTO suppliers VALUES (%s,%s,%s,%s,%s)', (i, *s))
+        cur.execute('INSERT INTO suppliers VALUES (?,?,?,?,?)', (i, *s))
     print(f'  suppliers: {len(SUPPLIERS_INFO)}')
 
-    start_date = datetime(2026, 1, 1)
+    start_date = datetime(2026, 3, 1)
     end_date = datetime(2026, 3, 31)
     all_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
 
-    print('  Generating sales transactions...')
+    print('  Generating sales...')
     sale_id = 1
     item_id = 1
     po_statuses = ['SELESAI', 'SELESAI', 'SELESAI', 'DIPO', 'DIKIRIM']
+    sales_batch = []
+    items_batch = []
 
     for date in all_dates:
-        num_trans = random.randint(80, 160)
+        num_trans = random.randint(1,10)
         for _ in range(num_trans):
             branch_id = random.randint(1, 10)
             customer_id = random.randint(1, 1000)
@@ -222,14 +296,14 @@ def seed_master_data(conn):
                 unit_price = prod[5]
                 subtotal = qty * unit_price
                 total += subtotal
-                cur.execute('INSERT INTO sales_items VALUES (%s,%s,%s,%s,%s,%s)',
-                            (item_id, sale_id, product_id, qty, unit_price, subtotal))
+                items_batch.append((item_id, sale_id, product_id, qty, unit_price, subtotal))
                 item_id += 1
-            cur.execute('INSERT INTO sales_headers VALUES (%s,%s,%s,%s,%s,%s)',
-                        (sale_id, branch_id, customer_id, date_str, pay_method, total))
+            sales_batch.append((sale_id, branch_id, customer_id, date_str, pay_method, total))
             sale_id += 1
 
-    print(f'  sales_headers: {sale_id - 1}')
+    cur.executemany('INSERT INTO sales_headers VALUES (?,?,?,?,?,?)', sales_batch)
+    cur.executemany('INSERT INTO sales_items VALUES (?,?,?,?,?,?)', items_batch)
+    print(f'  sales: {sale_id - 1} transactions')
 
     po_data = []
     for i in range(1, 501):
@@ -239,9 +313,8 @@ def seed_master_data(conn):
         status = random.choice(po_statuses)
         total = random.randint(1000000, 50000000)
         po_data.append((i, supplier_id, branch_id, order_date, status, total))
-    for p in po_data:
-        cur.execute('INSERT INTO purchase_orders VALUES (%s,%s,%s,%s,%s,%s)', p)
-    print(f'  purchase_orders: {len(po_data)}')
+    cur.executemany('INSERT INTO purchase_orders VALUES (?,?,?,?,?,?)', po_data)
+    print(f'  purchase_orders: 500')
 
     inv_count = 0
     for branch_id in range(1, 11):
@@ -249,63 +322,20 @@ def seed_master_data(conn):
             if random.random() < 0.7:
                 stock = random.randint(0, 500)
                 last_upd = f'2026-{random.randint(1,3):02d}-{random.randint(1,28):02d}'
-                cur.execute('INSERT INTO inventory VALUES (%s,%s,%s,%s,%s)',
+                cur.execute('INSERT INTO inventory VALUES (?,?,?,?,?)',
                             (branch_id * 1000 + product_id, branch_id, product_id, stock, last_upd))
                 inv_count += 1
     print(f'  inventory: {inv_count}')
 
-    conn.commit()
 
-
-def create_reporting_tables(conn):
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS daily_sales_by_branch (
-            date DATE NOT NULL, branch_id INTEGER NOT NULL,
-            branch_name TEXT NOT NULL, total_sales INTEGER NOT NULL,
-            transaction_count INTEGER NOT NULL,
-            PRIMARY KEY (date, branch_id)
-        );
-        CREATE TABLE IF NOT EXISTS daily_sales_by_category (
-            date DATE NOT NULL, category_id INTEGER NOT NULL,
-            category_name TEXT NOT NULL, total_sales INTEGER NOT NULL,
-            qty_sold INTEGER NOT NULL,
-            PRIMARY KEY (date, category_id)
-        );
-        CREATE TABLE IF NOT EXISTS monthly_sales_summary (
-            year_month TEXT NOT NULL, branch_id INTEGER NOT NULL,
-            branch_name TEXT NOT NULL, total_sales INTEGER NOT NULL,
-            total_qty INTEGER NOT NULL, avg_transaction REAL NOT NULL,
-            PRIMARY KEY (year_month, branch_id)
-        );
-        CREATE TABLE IF NOT EXISTS payment_method_summary (
-            date DATE NOT NULL, payment_method TEXT NOT NULL,
-            total_amount INTEGER NOT NULL, transaction_count INTEGER NOT NULL,
-            PRIMARY KEY (date, payment_method)
-        );
-        CREATE TABLE IF NOT EXISTS top_products (
-            month TEXT NOT NULL, product_id INTEGER NOT NULL,
-            product_name TEXT NOT NULL, category_name TEXT NOT NULL,
-            qty_sold INTEGER NOT NULL, total_revenue INTEGER NOT NULL,
-            rank INTEGER NOT NULL,
-            PRIMARY KEY (month, product_id)
-        );
-    ''')
-    conn.commit()
-
-
-def populate_reporting(conn):
-    cur = conn.cursor()
-
-    cur.execute('TRUNCATE daily_sales_by_branch, daily_sales_by_category, monthly_sales_summary, payment_method_summary, top_products')
-
+def populate_reporting(cur):
     cur.execute('''
         INSERT INTO daily_sales_by_branch (date, branch_id, branch_name, total_sales, transaction_count)
         SELECT sh.transaction_date, b.id, b.name,
                SUM(sh.total_amount), COUNT(DISTINCT sh.id)
         FROM sales_headers sh
         JOIN branches b ON sh.branch_id = b.id
-        GROUP BY sh.transaction_date, b.id
+        GROUP BY sh.transaction_date, b.id, b.name
     ''')
     print(f'  daily_sales_by_branch: {cur.rowcount}')
 
@@ -317,19 +347,19 @@ def populate_reporting(conn):
         JOIN sales_items si ON sh.id = si.sale_id
         JOIN products p ON si.product_id = p.id
         JOIN categories c ON p.category_id = c.id
-        GROUP BY sh.transaction_date, c.id
+        GROUP BY sh.transaction_date, c.id, c.name
     ''')
     print(f'  daily_sales_by_category: {cur.rowcount}')
 
     cur.execute('''
         INSERT INTO monthly_sales_summary (year_month, branch_id, branch_name, total_sales, total_qty, avg_transaction)
-        SELECT TO_CHAR(sh.transaction_date, 'YYYY-MM'), b.id, b.name,
+        SELECT FORMAT(sh.transaction_date, 'yyyy-MM'), b.id, b.name,
                SUM(si.subtotal), SUM(si.quantity),
-               ROUND(AVG(si.subtotal)::numeric, 2)::real
+               ROUND(AVG(CAST(si.subtotal AS FLOAT)), 2)
         FROM sales_headers sh
         JOIN branches b ON sh.branch_id = b.id
         JOIN sales_items si ON sh.id = si.sale_id
-        GROUP BY TO_CHAR(sh.transaction_date, 'YYYY-MM'), b.id
+        GROUP BY FORMAT(sh.transaction_date, 'yyyy-MM'), b.id, b.name
     ''')
     print(f'  monthly_sales_summary: {cur.rowcount}')
 
@@ -344,24 +374,22 @@ def populate_reporting(conn):
 
     cur.execute('''
         INSERT INTO top_products (month, product_id, product_name, category_name, qty_sold, total_revenue, rank)
-        SELECT TO_CHAR(sh.transaction_date, 'YYYY-MM'), p.id, p.name, c.name,
+        SELECT FORMAT(sh.transaction_date, 'yyyy-MM'), p.id, p.name, c.name,
                SUM(si.quantity), SUM(si.subtotal),
                RANK() OVER (
-                   PARTITION BY TO_CHAR(sh.transaction_date, 'YYYY-MM')
+                   PARTITION BY FORMAT(sh.transaction_date, 'yyyy-MM')
                    ORDER BY SUM(si.subtotal) DESC
                )
         FROM sales_headers sh
         JOIN sales_items si ON sh.id = si.sale_id
         JOIN products p ON si.product_id = p.id
         JOIN categories c ON p.category_id = c.id
-        GROUP BY TO_CHAR(sh.transaction_date, 'YYYY-MM'), p.id
+        GROUP BY FORMAT(sh.transaction_date, 'yyyy-MM'), p.id, p.name, c.name
     ''')
     print(f'  top_products: {cur.rowcount}')
 
-    conn.commit()
 
-
-def export_to_sqlite(conn):
+def export_to_sqlite(cur):
     db_path = os.path.join(DATA_DIR, 'data_retail.db')
     if os.path.exists(db_path):
         os.remove(db_path)
@@ -374,18 +402,16 @@ def export_to_sqlite(conn):
         'monthly_sales_summary', 'payment_method_summary', 'top_products',
     ]
 
-    pg_cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
     for table in tables:
-        pg_cur.execute(f'SELECT * FROM {table} ORDER BY 1')
-        rows = pg_cur.fetchall()
+        cur.execute(f'SELECT * FROM [{table}] ORDER BY 1')
+        rows = cur.fetchall()
         if not rows:
             print(f'  SKIP {table} (empty)')
             continue
-        cols = list(rows[0].keys())
+        cols = [desc[0] for desc in cur.description]
         col_types = {}
-        for col in cols:
-            val = rows[0][col]
+        for i, col in enumerate(cols):
+            val = rows[0][i]
             if isinstance(val, int):
                 col_types[col] = 'INTEGER'
             elif isinstance(val, float):
@@ -397,7 +423,7 @@ def export_to_sqlite(conn):
         sl_cur.execute(f'CREATE TABLE "{table}" ({col_defs})')
         placeholders = ', '.join(['?' for _ in cols])
         col_names = ', '.join(f'"{c}"' for c in cols)
-        data = [tuple(r[c] for c in cols) for r in rows]
+        data = [tuple(r[i] for i in range(len(cols))) for r in rows]
         sl_cur.executemany(f'INSERT INTO "{table}" ({col_names}) VALUES ({placeholders})', data)
         print(f'  {table}: {len(rows)} rows')
 
@@ -407,32 +433,37 @@ def export_to_sqlite(conn):
 
 
 if __name__ == '__main__':
-    print('=== SETUP POSTGRESQL ===')
-    print('Pastikan container PostgreSQL sudah jalan:')
+    print('=== SETUP MSSQL ===')
+    print('Pastikan container MSSQL sudah jalan:')
     print('  docker compose up -d\n')
 
-    try:
-        conn = get_conn()
-    except Exception as e:
-        print(f'ERROR: Tidak bisa konek ke PostgreSQL: {e}')
-        print('Jalankan: docker compose up -d')
-        exit(1)
+    ensure_database()
+
+    conn = pyodbc.connect(CONN_STR, fast_executemany=True)
+    cur = conn.cursor()
+
+    for table in ['branches', 'categories', 'products', 'customers', 'suppliers',
+                   'sales_headers', 'sales_items', 'purchase_orders', 'inventory',
+                   'daily_sales_by_branch', 'daily_sales_by_category',
+                   'monthly_sales_summary', 'payment_method_summary', 'top_products']:
+        cur.execute(f'DROP TABLE IF EXISTS [{table}]')
+    conn.commit()
 
     print('1. Membuat tables...')
-    create_tables(conn)
+    create_tables(cur)
 
     print('2. Mengisi master data...')
-    seed_master_data(conn)
+    seed_data(cur)
+    conn.commit()
 
-    print('3. Membuat reporting tables...')
-    create_reporting_tables(conn)
+    print('3. Mengisi reporting data...')
+    populate_reporting(cur)
+    conn.commit()
 
-    print('4. Mengisi reporting data...')
-    populate_reporting(conn)
+    print('4. Export ke SQLite intermediary...')
+    export_to_sqlite(cur)
 
-    print('5. Export ke SQLite intermediary...')
-    export_to_sqlite(conn)
-
+    cur.close()
     conn.close()
     print('\nSelesai! Sekarang jalankan frontend:')
     print('  streamlit run 02_frontend_streamlit.py')

@@ -1,19 +1,18 @@
+import os
+import sqlite3
 from flask import Flask, render_template, request
-import psycopg2
-import psycopg2.extras
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+SQLITE_PATH = os.path.join(BASE, 'data', 'data_retail.db')
 
 app = Flask(__name__)
 
-DB_CONFIG = dict(
-    host='localhost', port=5432,
-    dbname='reporting_db', user='report_user', password='report_pass',
-)
-
 
 def query(sql, params=None):
-    conn = psycopg2.connect(**DB_CONFIG)
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute(sql, params)
+    conn = sqlite3.connect(SQLITE_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(sql, params or [])
     rows = cur.fetchall()
     conn.close()
     return rows
@@ -26,7 +25,7 @@ def dashboard():
                SUM(total_sales) as grand_total,
                SUM(transaction_count) as total_transactions
         FROM daily_sales_by_branch
-    '')[0]
+    ''')[0]
 
     sales_by_branch = query('''
         SELECT branch_name, SUM(total_sales) as total, SUM(transaction_count) as count
@@ -51,16 +50,13 @@ def dashboard():
 @app.route('/branches')
 def branches():
     dates = query('SELECT DISTINCT date FROM daily_sales_by_branch ORDER BY date DESC')
-
     selected = request.args.get('date', dates[0]['date']) if dates else None
-
     branch_data = query('''
         SELECT branch_name, total_sales, transaction_count
         FROM daily_sales_by_branch
-        WHERE date = %s
+        WHERE date = ?
         ORDER BY total_sales DESC
     ''', (selected,)) if selected else []
-
     return render_template('branches.html', dates=[d['date'] for d in dates],
                            selected=selected, branch_data=branch_data)
 
@@ -73,14 +69,12 @@ def products():
         WHERE rank <= 10
         ORDER BY month DESC, rank ASC
     ''')
-
     by_category = query('''
         SELECT category_name, SUM(total_sales) as total, SUM(qty_sold) as total_qty
         FROM daily_sales_by_category
         GROUP BY category_name
         ORDER BY total DESC
     ''')
-
     return render_template('products.html', top=top, by_category=by_category)
 
 
@@ -96,9 +90,12 @@ def sales():
         ORDER BY sh.id DESC
         LIMIT 100
     ''')
-
     return render_template('sales.html', recent=recent)
 
 
 if __name__ == '__main__':
+    if not os.path.exists(SQLITE_PATH):
+        print(f'ERROR: {SQLITE_PATH} tidak ditemukan.')
+        print('Jalankan dulu: python 00_setup_mssql.py')
+        exit(1)
     app.run(host='0.0.0.0', port=5000, debug=True)

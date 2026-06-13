@@ -292,7 +292,7 @@ def create_reporting_db():
 
 if __name__ == '__main__':
     print('=== SETUP DATABASE ===')
-    create_master_db()
+    # create_master_db()
     create_reporting_db()
     print('\nSelesai! Jalankan:')
     print('  python 01_sql_basics.py')
