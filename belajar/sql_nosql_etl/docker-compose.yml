@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - ./pg_data:/var/lib/postgresql/data
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -21,7 +21,7 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - mssql_data:/var/opt/mssql
+      - ./mssql_data:/var/opt/mssql
 
   mongodb:
     image: mongo:7
@@ -29,9 +29,9 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - ./mongo_data:/data/db
 
-volumes:
-  pg_data:
-  mongo_data:
-  mssql_data:
+# volumes:
+#   pg_data:
+#   mongo_data:
+#   mssql_data:

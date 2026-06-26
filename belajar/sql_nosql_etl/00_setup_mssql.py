@@ -1,11 +1,14 @@
-import pyodbc
+# import pyodbc
+import mssql_python
 import sqlite3
 import random
 import os
 from datetime import datetime, timedelta
 
 """
-TODO: use mssql-python instead of pyodbc for better performance and native support
+TODO: use mssql-python instead of mssql_python for better performance and native support
+
+python3 -m pip install mssql-python
 """
 
 
@@ -17,8 +20,8 @@ import config
 MSSQL_CONFIG = config.MSSQL_CONFIG
 
 CONN_STR = (
-    f"DRIVER={MSSQL_CONFIG['driver']};"
-    f"SERVER={MSSQL_CONFIG['server']};"
+    # f"DRIVER={MSSQL_CONFIG['driver']};"
+    f"SERVER={MSSQL_CONFIG['server']},{MSSQL_CONFIG['port']};"
     f"DATABASE={MSSQL_CONFIG['database']};"
     f"UID={MSSQL_CONFIG['username']};"
     f"PWD={MSSQL_CONFIG['password']};"
@@ -111,21 +114,15 @@ SUPPLIERS_INFO = [
     ('PT Lion Superindo', 'Jakarta', 'lion@email.com', '45 hari'),
 ]
 
-
 def ensure_database():
-    conn = pyodbc.connect(
-        f"DRIVER={MSSQL_CONFIG['driver']};"
-        f"SERVER={MSSQL_CONFIG['server']};"
-        f"UID={MSSQL_CONFIG['username']};"
-        f"PWD={MSSQL_CONFIG['password']};"
-        "TrustServerCertificate=yes;"
+    conn = mssql_python.connect(
+        CONN_STR.replace(f"DATABASE={MSSQL_CONFIG['database']};", "DATABASE=master;")
     )
     conn.autocommit = True
     cur = conn.cursor()
     cur.execute(f"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '{MSSQL_CONFIG['database']}') CREATE DATABASE [{MSSQL_CONFIG['database']}]")
     cur.close()
     conn.close()
-
 
 def create_tables(cur):
     cur.execute('''
@@ -141,10 +138,13 @@ def create_tables(cur):
     ''')
     cur.execute('''
         CREATE TABLE products (
-            id INT IDENTITY(1,1) PRIMARY KEY, sku VARCHAR(20) UNIQUE NOT NULL,
-            name VARCHAR(200) NOT NULL, category_id INT NOT NULL,
+            id INT IDENTITY(1,1) PRIMARY KEY, 
+            sku VARCHAR(20) UNIQUE NOT NULL,
+            name VARCHAR(200) NOT NULL, 
+            category_id INT NOT NULL,
             unit VARCHAR(20) DEFAULT 'pcs',
-            supplier_price INT NOT NULL, retail_price INT NOT NULL,
+            supplier_price INT NOT NULL, 
+            retail_price INT NOT NULL,
             supplier_id INT NOT NULL
         )
     ''')
@@ -389,82 +389,88 @@ def populate_reporting(cur):
     print(f'  top_products: {cur.rowcount}')
 
 
-def export_to_sqlite(cur):
+# def export_to_sqlite(cur):
+#     db_path = os.path.join(DATA_DIR, 'data_retail.db')
+#     if os.path.exists(db_path):
+#         os.remove(db_path)
+#     sl_conn = sqlite3.connect(db_path)
+#     sl_cur = sl_conn.cursor()
+
+#     tables = [
+#         'branches', 'categories', 'products', 'customers', 'suppliers',
+#         'daily_sales_by_branch', 'daily_sales_by_category',
+#         'monthly_sales_summary', 'payment_method_summary', 'top_products',
+#     ]
+
+#     for table in tables:
+#         cur.execute(f'SELECT * FROM [{table}] ORDER BY 1')
+#         rows = cur.fetchall()
+#         if not rows:
+#             print(f'  SKIP {table} (empty)')
+#             continue
+#         cols = [desc[0] for desc in cur.description]
+#         col_types = {}
+#         for i, col in enumerate(cols):
+#             val = rows[0][i]
+#             if isinstance(val, int):
+#                 col_types[col] = 'INTEGER'
+#             elif isinstance(val, float):
+#                 col_types[col] = 'REAL'
+#             else:
+#                 col_types[col] = 'TEXT'
+#         col_defs = ', '.join(f'"{c}" {col_types[c]}' for c in cols)
+#         sl_cur.execute(f'DROP TABLE IF EXISTS "{table}"')
+#         sl_cur.execute(f'CREATE TABLE "{table}" ({col_defs})')
+#         placeholders = ', '.join(['?' for _ in cols])
+#         col_names = ', '.join(f'"{c}"' for c in cols)
+#         data = [tuple(r[i] for i in range(len(cols))) for r in rows]
+#         sl_cur.executemany(f'INSERT INTO "{table}" ({col_names}) VALUES ({placeholders})', data)
+#         print(f'  {table}: {len(rows)} rows')
+
+#     sl_conn.commit()
+#     sl_conn.close()
+#     print(f'\nSQLite intermediary: {db_path}')
+
+def export_to_sqlite(mssql_cur):
     db_path = os.path.join(DATA_DIR, 'data_retail.db')
     if os.path.exists(db_path):
         os.remove(db_path)
     sl_conn = sqlite3.connect(db_path)
     sl_cur = sl_conn.cursor()
 
-    tables = [
-        'branches', 'categories', 'products', 'customers', 'suppliers',
-        'daily_sales_by_branch', 'daily_sales_by_category',
-        'monthly_sales_summary', 'payment_method_summary', 'top_products',
-    ]
 
-    for table in tables:
-        cur.execute(f'SELECT * FROM [{table}] ORDER BY 1')
-        rows = cur.fetchall()
-        if not rows:
-            print(f'  SKIP {table} (empty)')
-            continue
-        cols = [desc[0] for desc in cur.description]
-        col_types = {}
-        for i, col in enumerate(cols):
-            val = rows[0][i]
-            if isinstance(val, int):
-                col_types[col] = 'INTEGER'
-            elif isinstance(val, float):
-                col_types[col] = 'REAL'
-            else:
-                col_types[col] = 'TEXT'
-        col_defs = ', '.join(f'"{c}" {col_types[c]}' for c in cols)
-        sl_cur.execute(f'DROP TABLE IF EXISTS "{table}"')
-        sl_cur.execute(f'CREATE TABLE "{table}" ({col_defs})')
-        placeholders = ', '.join(['?' for _ in cols])
-        col_names = ', '.join(f'"{c}"' for c in cols)
-        data = [tuple(r[i] for i in range(len(cols))) for r in rows]
-        sl_cur.executemany(f'INSERT INTO "{table}" ({col_names}) VALUES ({placeholders})', data)
-        print(f'  {table}: {len(rows)} rows')
-
-    sl_conn.commit()
-    sl_conn.close()
-    print(f'\nSQLite intermediary: {db_path}')
 
 
 if __name__ == '__main__':
-    print('=== SETUP MSSQL ===')
     print('Pastikan container MSSQL sudah jalan:')
-    print('  docker compose up -d\n')
-
     ensure_database()
 
-    conn = pyodbc.connect(CONN_STR, fast_executemany=True)
+    conn = mssql_python.connect(CONN_STR, fast_executemany=True)
     cur = conn.cursor()
 
-    for table in ['branches', 'categories', 'products', 'customers', 'suppliers',
-                   'sales_headers', 'sales_items', 'purchase_orders', 'inventory',
-                   'daily_sales_by_branch', 'daily_sales_by_category',
-                   'monthly_sales_summary', 'payment_method_summary', 'top_products']:
-        cur.execute(f'DROP TABLE IF EXISTS [{table}]')
-    conn.commit()
+    # for table in ['branches', 'categories', 'products', 'customers', 'suppliers',
+    #                'sales_headers', 'sales_items', 'purchase_orders', 'inventory',
+    #                'daily_sales_by_branch', 'daily_sales_by_category',
+    #                'monthly_sales_summary', 'payment_method_summary', 'top_products']:
+    #     cur.execute(f'DROP TABLE IF EXISTS [{table}]')
+    # conn.commit()
 
-    print('1. Membuat tables...')
-    create_tables(cur)
+    # print('1. Membuat tables...')
+    # create_tables(cur)
 
-    print('2. Mengisi master data...')
-    seed_data(cur)
-    conn.commit()
+    # print('2. Mengisi master data...')
+    # seed_data(cur)
+    # conn.commit()
 
-    print('3. Mengisi reporting data...')
-    populate_reporting(cur)
-    conn.commit()
+    # print('3. Mengisi reporting data...')
+    # populate_reporting(cur)
+    # conn.commit()
 
-    print('4. Export ke SQLite intermediary...')
-    export_to_sqlite(cur)
+    # print('4. Export ke SQLite intermediary...')
+    # export_to_sqlite(cur)
 
-    cur.close()
-    conn.close()
-    print('\nSelesai! Sekarang jalankan frontend:')
-    print('  streamlit run 02_frontend_streamlit.py')
-    print('  python 03_frontend_html_bootstrap.py')
+    # cur.close()
+    # conn.close()
+    # print('\nSelesai! Sekarang jalankan frontend:')
+    # print('  streamlit run 02_frontend_streamlit.py')
+    # print('  python 03_frontend_html_bootstrap.py')
